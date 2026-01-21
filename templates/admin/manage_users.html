@@ -1,0 +1,159 @@
+{% extends 'base.html' %} {% block title %}Manage Users - Admin{% endblock %} {%
+block content %}
+<div class="container" style="margin-top: 2rem; margin-bottom: 2rem">
+  <div class="section-header">
+    <h1>User Management</h1>
+    <p>Manage all students and admins in the system</p>
+  </div>
+
+  <div style="display: flex; gap: 1rem; margin-bottom: 2rem">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"
+      >← Back to Dashboard</a
+    >
+    <a href="{{ url_for('manage_admins') }}" class="btn-secondary"
+      >Manage Admins</a
+    >
+    <a href="{{ url_for('students_activity') }}" class="btn-secondary"
+      >Student Activity</a
+    >
+    <a href="{{ url_for('view_login_history') }}" class="btn-secondary"
+      >Login History</a
+    >
+  </div>
+
+  <!-- Pending Approvals Section -->
+  {% set pending = users | selectattr('is_approved', 'false') | list %} {% if
+  pending %}
+  <div class="glass-card-heavy" style="margin-bottom: 2rem; padding: 1.5rem">
+    <h2 style="color: var(--accent); margin-bottom: 1rem">
+      ⏳ Pending Approval ({{ pending | length }})
+    </h2>
+    <div style="overflow-x: auto">
+      <table style="width: 100%; border-collapse: collapse">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--primary)">
+            <th style="padding: 0.75rem; text-align: left">Student ID</th>
+            <th style="padding: 0.75rem; text-align: left">Name</th>
+            <th style="padding: 0.75rem; text-align: left">Email</th>
+            <th style="padding: 0.75rem; text-align: left">Branch</th>
+            <th style="padding: 0.75rem; text-align: left">Registered</th>
+            <th style="padding: 0.75rem; text-align: center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in pending %}
+          <tr style="border-bottom: 1px solid var(--border-color)">
+            <td style="padding: 0.75rem">
+              {{ user.student_info.student_id if user.student_info else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">
+              {{ user.student_info.name if user.student_info else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">{{ user.email }}</td>
+            <td style="padding: 0.75rem">
+              {{ user.student_info.branch if user.student_info else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">
+              {{ user.created_at.strftime('%d-%m-%Y %H:%M') if user.created_at
+              else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem; text-align: center">
+              <form
+                method="POST"
+                action="{{ url_for('approve_student', user_id=user._id) }}"
+                style="display: inline"
+              >
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  style="padding: 0.5rem 1rem; margin-right: 0.5rem"
+                >
+                  ✓ Approve
+                </button>
+              </form>
+              <form
+                method="POST"
+                action="{{ url_for('reject_student', user_id=user._id) }}"
+                style="display: inline"
+                onsubmit="return confirm('Are you sure?');"
+              >
+                <button
+                  type="submit"
+                  class="btn-danger"
+                  style="padding: 0.5rem 1rem"
+                >
+                  ✗ Reject
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Approved Users Section -->
+  <div class="glass-card-heavy" style="padding: 1.5rem">
+    <h2 style="color: var(--secondary); margin-bottom: 1rem">
+      ✓ Approved Users ({{ (users | selectattr('is_approved', 'true') | list) |
+      length }})
+    </h2>
+    <div style="overflow-x: auto">
+      <table style="width: 100%; border-collapse: collapse">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--secondary)">
+            <th style="padding: 0.75rem; text-align: left">Student ID</th>
+            <th style="padding: 0.75rem; text-align: left">Name</th>
+            <th style="padding: 0.75rem; text-align: left">Email</th>
+            <th style="padding: 0.75rem; text-align: left">Branch</th>
+            <th style="padding: 0.75rem; text-align: left">Registered</th>
+            <th style="padding: 0.75rem; text-align: left">Last Login</th>
+            <th style="padding: 0.75rem; text-align: left">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users if user.is_approved %}
+          <tr style="border-bottom: 1px solid var(--border-color)">
+            <td style="padding: 0.75rem">
+              <strong
+                >{{ user.student_info.student_id if user.student_info else 'N/A'
+                }}</strong
+              >
+            </td>
+            <td style="padding: 0.75rem">
+              {{ user.student_info.name if user.student_info else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">{{ user.email }}</td>
+            <td style="padding: 0.75rem">
+              {{ user.student_info.branch if user.student_info else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">
+              {{ user.created_at.strftime('%d-%m-%Y') if user.created_at else
+              'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">
+              {% if user.last_login_info %} {{
+              user.last_login_info.login_time.strftime('%d-%m-%Y %H:%M') }} {%
+              else %} Never logged in {% endif %}
+            </td>
+            <td style="padding: 0.75rem">
+              <span
+                style="
+                  padding: 0.25rem 0.75rem;
+                  border-radius: 20px;
+                  background: var(--success-light);
+                  color: var(--success);
+                "
+                >Active</span
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}All Jobs - Chetan Business School{% endblock %}
+
+{% block content %}
+<div class="section-card glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h2><i class="ph-bold ph-briefcase" style="color: var(--primary); margin-right: 0.5rem;"></i>Job Portal</h2>
+            <p class="text-muted" style="font-size: 0.9rem;">Browse all available opportunities posted by the placement
+                cell.</p>
+        </div>
+        <a href="{{ url_for('student_dashboard') }}" class="btn-secondary"><i class="ph ph-arrow-left"></i>
+            Dashboard</a>
+    </div>
+
+    <div class="jobs-grid">
+        {% for job in jobs %}
+        <div class="job-card glass-card {% if student.cgpa < job.min_cgpa %}locked{% endif %}">
+            <div class="job-header">
+                <h3>{{ job.company_name }}</h3>
+                <span class="badge {% if student.cgpa < job.min_cgpa %}badge-error{% endif %}">
+                    {% if student.cgpa < job.min_cgpa %}<i class="ph ph-lock"></i> {% endif %}
+                        Min {{ job.min_cgpa }} CGPA
+                </span>
+            </div>
+            <p class="role">{{ job.role }}</p>
+
+            <div
+                style="margin: 1.25rem 0; background: rgba(37, 99, 235, 0.05); padding: 1rem; border-radius: 10px; border: 1px solid rgba(37, 99, 235, 0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                    <span
+                        style="font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="ph-bold ph-sparkle"></i> AI Match Score
+                    </span>
+                    <span style="font-weight: 700; color: var(--primary);">{{ job.match_score }}%</span>
+                </div>
+                <div style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden;">
+                    <div
+                        style="height: 100%; --width: {{ job.match_score }}%; width: var(--width); background: var(--gradient); border-radius: 10px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="job-meta">
+                <span><i class="ph ph-calendar"></i> Drive: {{ job.drive_date }}</span>
+            </div>
+
+            {% if job._id in applied_job_ids %}
+            <button class="btn-secondary w-100" disabled><i class="ph ph-check-circle"></i> Already Applied</button>
+            {% elif student.cgpa >= job.min_cgpa %}
+            <form action="{{ url_for('apply_job', job_id=job._id) }}" method="POST">
+                <button type="submit" class="btn-primary w-100">Apply Now</button>
+            </form>
+            {% else %}
+            <button class="btn-secondary w-100" disabled style="opacity: 0.6; cursor: not-allowed;">
+                <i class="ph ph-info"></i> Not Eligible
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .job-card.locked {
+        background: rgba(241, 245, 249, 0.5);
+    }
+
+    .badge-error {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+</style>
+{% endblock %}

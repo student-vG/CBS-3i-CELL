@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline - Placement Cell</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .offline-container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .offline-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      h1 {
+        color: #1f2937;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+
+      p {
+        color: #6b7280;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .offline-features {
+        background: #f3f4f6;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: left;
+      }
+
+      .offline-features h3 {
+        color: #1f2937;
+        margin-bottom: 15px;
+        font-size: 16px;
+      }
+
+      .offline-features ul {
+        list-style: none;
+      }
+
+      .offline-features li {
+        color: #4b5563;
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .offline-features li:before {
+        content: "✓";
+        color: #10b981;
+        font-weight: bold;
+        margin-right: 10px;
+        font-size: 18px;
+      }
+
+      .offline-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+      }
+
+      .btn-secondary:hover {
+        background: #f3f4f6;
+        transform: translateY(-2px);
+      }
+
+      .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 12px 16px;
+        background: #fee2e2;
+        color: #991b1b;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #dc2626;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="offline-container">
+      <div class="offline-icon">📡</div>
+      <h1>You're Offline</h1>
+      <p>
+        It looks like you've lost your internet connection. But don't worry, you
+        can still:
+      </p>
+
+      <div class="offline-features">
+        <h3>Available Features:</h3>
+        <ul>
+          <li>View your profile information</li>
+          <li>Access previously loaded jobs</li>
+          <li>Read past notifications</li>
+          <li>Draft messages and applications</li>
+          <li>Everything will sync when you're back online</li>
+        </ul>
+      </div>
+
+      <div class="offline-actions">
+        <button class="btn-primary" onclick="goHome()">Go to Dashboard</button>
+        <button class="btn-secondary" onclick="location.reload()">
+          Try Again
+        </button>
+      </div>
+
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        Waiting for connection...
+      </div>
+    </div>
+
+    <script>
+      function goHome() {
+        window.location.href = "/";
+      }
+
+      // Check connection status
+      window.addEventListener("online", () => {
+        showConnectionRestored();
+      });
+
+      function showConnectionRestored() {
+        const container = document.querySelector(".offline-container");
+        container.innerHTML = `
+                <div style="font-size: 80px; margin-bottom: 20px; animation: bounce 0.6s ease-out;">✓</div>
+                <h1 style="color: #10b981;">You're Back Online!</h1>
+                <p>Your connection has been restored. Syncing your data...</p>
+                <button class="btn-primary" onclick="location.href='/'">Continue to Dashboard</button>
+            `;
+        setTimeout(() => {
+          location.href = "/";
+        }, 2000);
+      }
+
+      // Add bounce animation
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes bounce {
+                0% { transform: scale(0); opacity: 0; }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>

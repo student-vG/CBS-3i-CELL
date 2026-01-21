@@ -1,0 +1,943 @@
+{% extends 'base.html' %} {% block title %}Manage Jobs - Chetan Business
+School{% endblock %} {% block content %}
+<div class="section-card glass-card">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    "
+  >
+    <div>
+      <h2 style="display: flex; align-items: center; gap: 0.5rem">
+        <i class="ph-bold ph-briefcase" style="color: var(--primary)"></i> Job
+        Postings
+      </h2>
+      <div style="color: var(--text-muted); font-size: 0.95rem">
+        Manage job openings with status tracking and version history
+      </div>
+    </div>
+    <div
+      style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap"
+    >
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"
+        >← Back</a
+      >
+      <button class="btn-primary" onclick="openJobModal()">
+        <i class="ph ph-plus"></i> New Job
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter/Status Tabs -->
+  <div
+    style="
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    "
+  >
+    <button
+      class="status-tab active"
+      onclick="filterJobs('all')"
+      style="
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        color: var(--primary);
+        border-bottom: 2px solid var(--primary);
+        font-weight: 600;
+      "
+    >
+      All ({{ jobs|length }})
+    </button>
+    <button
+      class="status-tab"
+      onclick="filterJobs('published')"
+      style="
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      "
+    >
+      Published
+    </button>
+    <button
+      class="status-tab"
+      onclick="filterJobs('draft')"
+      style="
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      "
+    >
+      Draft
+    </button>
+    <button
+      class="status-tab"
+      onclick="filterJobs('expired')"
+      style="
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      "
+    >
+      Expired
+    </button>
+  </div>
+
+  <!-- Jobs Grid -->
+  <div class="jobs-grid">
+    {% for job in jobs %}
+    <div
+      class="job-card glass-card job-card-item"
+      data-status="{{ job.status or 'draft' }}"
+      data-job="{{ job.safe_data | tojson | safe }}"
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+        "
+      >
+        <div style="flex: 1">
+          <h3 style="margin-bottom: 0.25rem">{{ job.company_name }}</h3>
+          <div
+            style="
+              color: var(--text-muted);
+              margin-bottom: 0.5rem;
+              font-weight: 500;
+            "
+          >
+            {{ job.role }}
+          </div>
+
+          <!-- Status & Metadata -->
+          <div
+            style="
+              display: flex;
+              gap: 0.75rem;
+              align-items: center;
+              margin-bottom: 0.75rem;
+              flex-wrap: wrap;
+            "
+          >
+            <!-- Status Badge -->
+            {% if job.status == 'published' %}
+            <span class="badge" style="background: #ecfeff; color: #036969"
+              >✓ Published</span
+            >
+            {% elif job.status == 'expired' %}
+            <span class="badge" style="background: #fee2e2; color: #dc2626"
+              >⊘ Expired</span
+            >
+            {% else %}
+            <span class="badge" style="background: #fff7ed; color: #b45309"
+              >◯ Draft</span
+            >
+            {% endif %}
+
+            <!-- CGPA & Employment Type -->
+            <div style="font-size: 0.9rem; color: var(--text-muted)">
+              {{ job.min_cgpa or 0 }} CGPA min
+            </div>
+            {% if job.employment_type %}
+            <div style="font-size: 0.9rem; color: var(--text-muted)">
+              {{ job.employment_type }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Dates -->
+          <div
+            style="
+              font-size: 0.85rem;
+              color: var(--text-muted);
+              margin-bottom: 0.5rem;
+            "
+          >
+            <div>
+              Created: {{ job.created_at.strftime('%d %b %Y') if job.created_at
+              else 'N/A' }}
+            </div>
+            {% if job.published_at %}
+            <div>
+              Published: {{ job.published_at.strftime('%d %b %Y') if
+              job.published_at else 'N/A' }}
+            </div>
+            {% endif %} {% if job.expires_at %}
+            <div>
+              Expires: {{ job.expires_at.strftime('%d %b %Y') if job.expires_at
+              else 'N/A' }}
+            </div>
+            {% endif %}
+            <div style="color: #6b7280">
+              By: {{ job.created_by }} ({{ job.author_role|title }})
+            </div>
+          </div>
+
+          <!-- Description Preview -->
+          <p
+            style="
+              margin-top: 0.75rem;
+              color: var(--text-main);
+              font-size: 0.95rem;
+            "
+          >
+            {{ job.get('description', '')[:200] }}{% if job.get('description') and
+            job.get('description')|length > 200 %}...{% endif %}
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+          "
+        >
+          <button
+            class="btn-secondary btn-sm"
+            onclick="openJobModal({{ loop.index0 }})"
+          >
+            <i class="ph ph-pencil"></i> Edit
+          </button>
+          <button
+            class="btn-secondary btn-sm"
+            onclick="previewJob({{ loop.index0 }})"
+          >
+            <i class="ph ph-eye"></i> Preview
+          </button>
+          {% if job.status != 'published' %}
+          <button
+            class="btn-primary btn-sm"
+            onclick="publishJobAction('{{ job._id }}')"
+          >
+            <i class="ph ph-arrow-up"></i> Publish
+          </button>
+          {% endif %}
+          <form
+            action="{{ url_for('delete_job', job_id=job._id) }}"
+            method="POST"
+            onsubmit="return confirm('Delete this job and its applications?');"
+            style="margin: 0"
+          >
+            <button
+              type="submit"
+              class="btn-secondary btn-sm"
+              style="color: #ef4444; width: 100%"
+            >
+              <i class="ph ph-trash"></i> Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if not jobs %}
+    <div
+      style="
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+      "
+    >
+      <i class="ph-bold ph-briefcase" style="font-size: 3rem; opacity: 0.3"></i>
+      <p style="margin-top: 1rem">No jobs posted yet</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Enhanced Job Modal with Real-world Form -->
+<div
+  id="jobModal"
+  style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1700;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 1rem;
+  "
+>
+  <div
+    style="
+      background: var(--surface-solid);
+      width: 95%;
+      max-width: 900px;
+      border-radius: 16px;
+      padding: 2rem;
+      margin: auto;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    "
+  >
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      "
+    >
+      <h2 id="jobModalTitle">New Job Posting</h2>
+      <button
+        onclick="closeJobModal()"
+        style="
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 1.5rem;
+        "
+      >
+        ✕
+      </button>
+    </div>
+
+    <form id="jobForm" method="POST" onsubmit="handleJobFormSubmit(event)">
+      <input type="hidden" name="job_id" id="job_id" />
+
+      <!-- Section: Basic Information -->
+      <div
+        style="
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border);
+        "
+      >
+        <h3 style="margin-bottom: 1rem; color: var(--primary)">
+          Basic Information
+        </h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          "
+        >
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Company Name *</label
+            >
+            <input
+              type="text"
+              name="company"
+              id="company"
+              required
+              placeholder="e.g., Microsoft, Goldman Sachs"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+            <small
+              style="
+                color: var(--text-muted);
+                display: block;
+                margin-top: 0.25rem;
+              "
+              >Enter the hiring company name</small
+            >
+          </div>
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Job Role *</label
+            >
+            <input
+              type="text"
+              name="role"
+              id="role"
+              required
+              placeholder="e.g., Software Engineer, Product Manager"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+            <small
+              style="
+                color: var(--text-muted);
+                display: block;
+                margin-top: 0.25rem;
+              "
+              >Job position title</small
+            >
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Location</label
+            >
+            <input
+              type="text"
+              name="location"
+              id="location"
+              placeholder="e.g., Bangalore, Remote, Hybrid"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+          </div>
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Employment Type</label
+            >
+            <select
+              name="employment_type"
+              id="employment_type"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            >
+              <option value="">Select...</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Internship">Internship</option>
+              <option value="Temporary">Temporary</option>
+              <option value="Contract">Contract</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Job Details -->
+      <div
+        style="
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border);
+        "
+      >
+        <h3 style="margin-bottom: 1rem; color: var(--primary)">Job Details</h3>
+
+        <div style="margin-bottom: 1rem">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+            >Job Description *</label
+          >
+          <textarea
+            name="description"
+            id="description"
+            rows="6"
+            required
+            placeholder="Provide detailed job description, responsibilities, and requirements..."
+            class="w-100"
+            style="
+              padding: 0.75rem;
+              border: 1px solid var(--border);
+              border-radius: 8px;
+              font-family: &quot;Outfit&quot;, sans-serif;
+            "
+          ></textarea>
+          <small
+            style="
+              color: var(--text-muted);
+              display: block;
+              margin-top: 0.25rem;
+            "
+            >Minimum 20 characters required</small
+          >
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Salary Package</label
+            >
+            <input
+              type="text"
+              name="package"
+              id="package"
+              placeholder="e.g., 12-15 LPA, ₹15,00,000 - ₹20,00,000"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+          </div>
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Minimum CGPA Required</label
+            >
+            <input
+              type="number"
+              name="min_cgpa"
+              id="min_cgpa"
+              step="0.01"
+              min="0"
+              max="10"
+              placeholder="e.g., 7.0"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Important Dates -->
+      <div
+        style="
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border);
+        "
+      >
+        <h3 style="margin-bottom: 1rem; color: var(--primary)">
+          Important Dates
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Drive/Interview Date</label
+            >
+            <input
+              type="date"
+              name="drive_date"
+              id="drive_date"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+          </div>
+          <div>
+            <label
+              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
+              >Application Expiry Date</label
+            >
+            <input
+              type="date"
+              name="expires_at"
+              id="expires_at"
+              class="w-100"
+              style="
+                padding: 0.75rem;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+              "
+            />
+            <small
+              style="
+                color: var(--text-muted);
+                display: block;
+                margin-top: 0.25rem;
+              "
+              >Applications will close on this date</small
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div
+        style="
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+          flex-wrap: wrap;
+        "
+      >
+        <button type="button" class="btn-secondary" onclick="closeJobModal()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="previewJobFromForm()"
+        >
+          <i class="ph ph-eye"></i> Preview
+        </button>
+        <input type="hidden" name="action" id="action" value="draft" />
+        <button type="submit" class="btn-primary" onclick="setAction('draft')">
+          <i class="ph ph-floppy-disk"></i> Save as Draft
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          onclick="setAction('publish')"
+        >
+          <i class="ph ph-arrow-up"></i> Publish Now
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div
+  id="jobPreviewModal"
+  style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1800;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 1rem;
+  "
+>
+  <div
+    style="
+      background: var(--surface-solid);
+      width: 95%;
+      max-width: 700px;
+      border-radius: 16px;
+      padding: 2rem;
+      margin: auto;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    "
+  >
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      "
+    >
+      <h2>Job Preview</h2>
+      <button
+        onclick="closePreviewModal()"
+        style="
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 1.5rem;
+        "
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="previewContent" style="margin-bottom: 1.5rem; line-height: 1.6">
+      <!-- Preview content will be inserted here -->
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: flex-end">
+      <button class="btn-secondary" onclick="closePreviewModal()">Close</button>
+      <button class="btn-primary" onclick="publishFromPreview()">
+        <i class="ph ph-arrow-up"></i> Publish Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .job-card {
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .job-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .jobs-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #jobModal > div {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+    
+    /* Stack Header */
+    div[style*="justify-content: space-between"] {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    
+    div[style*="justify-content: space-between"] > div:last-child {
+        width: 100%;
+    }
+    
+    div[style*="justify-content: space-between"] .btn-primary,
+    div[style*="justify-content: space-between"] .btn-secondary {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* Stack Job Card Content */
+    .job-card > div {
+        flex-direction: column !important;
+    }
+    
+    .job-card > div > div:last-child {
+        width: 100%;
+        flex-direction: row !important;
+        justify-content: space-between; /* or flex-start */
+        flex-wrap: wrap;
+        margin-top: 1rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+    }
+    
+    .job-card > div > div:last-child button,
+    .job-card > div > div:last-child form {
+        flex: 1;
+    }
+    
+    .job-card > div > div:last-child form button {
+        width: 100%;
+    }
+  }
+</style>
+
+<script>
+  let currentJobIndex = -1;
+  const jobs = [
+    {% for job in jobs %}
+      {{ job.safe_data | tojson | safe }},
+    {% endfor %}
+  ];
+
+  function setAction(action) {
+    document.getElementById('action').value = action;
+  }
+
+  function openJobModal(index = -1) {
+    currentJobIndex = index;
+    const modal = document.getElementById('jobModal');
+    const form = document.getElementById('jobForm');
+    const title = document.getElementById('jobModalTitle');
+
+    if (index >= 0 && jobs[index]) {
+      title.textContent = 'Edit Job Posting';
+      const job = jobs[index];
+      document.getElementById('job_id').value = job._id;
+      document.getElementById('company').value = job.company_name;
+      document.getElementById('role').value = job.role;
+      document.getElementById('location').value = job.location || '';
+      document.getElementById('employment_type').value = job.employment_type || '';
+      document.getElementById('description').value = job.description;
+      document.getElementById('package').value = job.package || '';
+      document.getElementById('min_cgpa').value = job.min_cgpa || '';
+      document.getElementById('drive_date').value = job.drive_date ? formatDateForInput(job.drive_date) : '';
+      document.getElementById('expires_at').value = job.expires_at ? formatDateForInput(job.expires_at) : '';
+      form.action = `/admin/jobs/${job._id}/edit`;
+    } else {
+      title.textContent = 'New Job Posting';
+      form.reset();
+      document.getElementById('job_id').value = '';
+      form.action = '/admin/jobs/add';
+    }
+    modal.style.display = 'flex';
+  }
+
+  function closeJobModal() {
+    document.getElementById('jobModal').style.display = 'none';
+    document.getElementById('jobForm').reset();
+  }
+
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string') {
+      const [year, month, day] = dateStr.split('-');
+      if (year && month && day) return dateStr;
+      try {
+        const date = new Date(dateStr);
+        return date.toISOString().split('T')[0];
+      } catch (e) {
+        return '';
+      }
+    }
+    return '';
+  }
+
+  function previewJobFromForm() {
+    const company = document.getElementById('company').value.trim();
+    const role = document.getElementById('role').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const package = document.getElementById('package').value.trim();
+    const location = document.getElementById('location').value.trim();
+    const minCGPA = document.getElementById('min_cgpa').value || 'Not specified';
+    const driveDate = document.getElementById('drive_date').value || 'TBD';
+    const expiryDate = document.getElementById('expires_at').value || 'Not specified';
+
+    if (!company || !role || !description) {
+      alert('Please fill in Company, Role, and Description');
+      return;
+    }
+
+    const html = `
+      <div style="background: var(--background); padding: 1.5rem; border-radius: 8px">
+        <div style="margin-bottom: 1rem">
+          <h3 style="margin-bottom: 0.25rem">${company}</h3>
+          <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500">${role}</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem">
+          <div><strong>Location:</strong> ${location || 'Not specified'}</div>
+          <div><strong>Min CGPA:</strong> ${minCGPA}</div>
+          <div><strong>Drive Date:</strong> ${driveDate}</div>
+          <div><strong>Applications Close:</strong> ${expiryDate}</div>
+          ${document.getElementById('package').value ? `<div><strong>Package:</strong> ${package}</div>` : ''}
+        </div>
+        <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem">
+          <h4 style="margin-bottom: 0.75rem">Job Description</h4>
+          <p style="white-space: pre-wrap; line-height: 1.6">${description}</p>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('previewContent').innerHTML = html;
+    document.getElementById('jobPreviewModal').style.display = 'flex';
+  }
+
+  function previewJob(index) {
+    if (index >= 0 && jobs[index]) {
+      const job = jobs[index];
+      const html = `
+        <div style="background: var(--background); padding: 1.5rem; border-radius: 8px">
+          <div style="margin-bottom: 1rem">
+            <h3 style="margin-bottom: 0.25rem">${job.company_name}</h3>
+            <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500">${job.role}</p>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem">
+            <div><strong>Location:</strong> ${job.location || 'Not specified'}</div>
+            <div><strong>Min CGPA:</strong> ${job.min_cgpa || 'Not specified'}</div>
+            <div><strong>Drive Date:</strong> ${job.drive_date || 'TBD'}</div>
+            <div><strong>Status:</strong> ${job.status.charAt(0).toUpperCase() + job.status.slice(1)}</div>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem">
+            <h4 style="margin-bottom: 0.75rem">Job Description</h4>
+            <p style="white-space: pre-wrap; line-height: 1.6">${job.description}</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('previewContent').innerHTML = html;
+      document.getElementById('jobPreviewModal').style.display = 'flex';
+    }
+  }
+
+  function closePreviewModal() {
+    document.getElementById('jobPreviewModal').style.display = 'none';
+  }
+
+  function publishFromPreview() {
+    setAction('publish');
+    document.getElementById('jobForm').submit();
+  }
+
+  function publishJobAction(jobId) {
+    if (confirm('Publish this job? Notifications will be sent to all students.')) {
+      // Create and submit a form to publish the job
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/admin/jobs/${jobId}/publish`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  function handleJobFormSubmit(event) {
+    event.preventDefault();
+    document.getElementById('jobForm').submit();
+  }
+
+  function filterJobs(status) {
+    // Update active tab
+    document.querySelectorAll('.status-tab').forEach(tab => {
+      tab.style.borderBottomColor = 'transparent';
+      tab.style.color = 'var(--text-muted)';
+    });
+    event.target.style.borderBottomColor = 'var(--primary)';
+    event.target.style.color = 'var(--primary)';
+
+    // Filter jobs
+    document.querySelectorAll('.job-card-item').forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      if (status === 'all' || cardStatus === status) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const jobModal = document.getElementById('jobModal');
+    const previewModal = document.getElementById('jobPreviewModal');
+    if (event.target === jobModal) closeJobModal();
+    if (event.target === previewModal) closePreviewModal();
+  };
+</script>
+
+{% endblock %}

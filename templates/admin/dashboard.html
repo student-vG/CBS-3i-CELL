@@ -1,0 +1,750 @@
+{% extends 'base.html' %} {% block title %}Admin Dashboard - Chetan Business
+School{% endblock %} {% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %} {% block content %}
+<div style="padding-bottom: 100px">
+  <!-- Header Section -->
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    "
+  >
+    <div>
+      <h1
+        style="color: var(--text-main); margin-bottom: 0.5rem; font-size: 2rem"
+      >
+        <i
+          class="ph-bold ph-house"
+          style="color: var(--primary); margin-right: 0.5rem"
+        ></i>
+        Admin Dashboard
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem">
+        Welcome back! Here's your placement management overview.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap">
+      {% if admin_level == 'super_admin' %}
+      <a href="{{ url_for('view_applications') }}" class="btn-secondary">
+        <i class="ph-bold ph-list"></i> Applications
+      </a>
+      {% endif %}
+      <button onclick="showLogoutModal(event)" class="btn-primary">
+        <i class="ph-bold ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards - Grid -->
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    "
+  >
+    <!-- Total Students Card -->
+    <div
+      class="glass-card-heavy"
+      style="padding: 1.75rem; position: relative; overflow: hidden"
+    >
+      <div
+        style="
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          width: 100px;
+          height: 100px;
+          background: rgba(99, 102, 241, 0.1);
+          border-radius: 50%;
+        "
+      ></div>
+      <div style="position: relative; z-index: 1">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+          "
+        >
+          <div>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Total Students
+            </p>
+            <h2
+              style="color: var(--primary); font-size: 2.5rem; font-weight: 700"
+            >
+              {{ stats.total_students }}
+            </h2>
+          </div>
+          <div
+            style="
+              background: var(--gradient);
+              color: white;
+              width: 60px;
+              height: 60px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.8rem;
+            "
+          >
+            <i class="ph-fill ph-users"></i>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #10b981;
+          "
+        >
+          <i class="ph ph-trending-up"></i> <span>Approved students</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Jobs Card -->
+    <div
+      class="glass-card-heavy"
+      style="padding: 1.75rem; position: relative; overflow: hidden"
+    >
+      <div
+        style="
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          width: 100px;
+          height: 100px;
+          background: rgba(6, 182, 212, 0.1);
+          border-radius: 50%;
+        "
+      ></div>
+      <div style="position: relative; z-index: 1">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+          "
+        >
+          <div>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Active Jobs
+            </p>
+            <h2 style="color: #06b6d4; font-size: 2.5rem; font-weight: 700">
+              {{ stats.total_jobs }}
+            </h2>
+          </div>
+          <div
+            style="
+              background: linear-gradient(135deg, #06b6d4, #10b981);
+              color: white;
+              width: 60px;
+              height: 60px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.8rem;
+            "
+          >
+            <i class="ph-fill ph-briefcase"></i>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #06b6d4;
+          "
+        >
+          <i class="ph ph-trending-up"></i> <span>Posted openings</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Applications Card -->
+    <div
+      class="glass-card-heavy"
+      style="padding: 1.75rem; position: relative; overflow: hidden"
+    >
+      <div
+        style="
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          width: 100px;
+          height: 100px;
+          background: rgba(244, 63, 94, 0.1);
+          border-radius: 50%;
+        "
+      ></div>
+      <div style="position: relative; z-index: 1">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+          "
+        >
+          <div>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Total Applications
+            </p>
+            <h2 style="color: #f43f5e; font-size: 2.5rem; font-weight: 700">
+              {{ stats.total_applications }}
+            </h2>
+          </div>
+          <div
+            style="
+              background: linear-gradient(135deg, #f43f5e, #fb923c);
+              color: white;
+              width: 60px;
+              height: 60px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.8rem;
+            "
+          >
+            <i class="ph-fill ph-file-text"></i>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #f43f5e;
+          "
+        >
+          <i class="ph ph-trending-up"></i> <span>Submissions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Approvals Card (Super Admin Only) -->
+    {% if admin_level == 'super_admin' %}
+    <div
+      class="glass-card-heavy"
+      style="padding: 1.75rem; position: relative; overflow: hidden"
+    >
+      <div
+        style="
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          width: 100px;
+          height: 100px;
+          background: rgba(251, 146, 60, 0.1);
+          border-radius: 50%;
+        "
+      ></div>
+      <div style="position: relative; z-index: 1">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+          "
+        >
+          <div>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Pending Approvals
+            </p>
+            <h2 style="color: #fb923c; font-size: 2.5rem; font-weight: 700">
+              {{ stats.pending_approvals | default(0) }}
+            </h2>
+          </div>
+          <div
+            style="
+              background: linear-gradient(135deg, #fb923c, #f97316);
+              color: white;
+              width: 60px;
+              height: 60px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.8rem;
+            "
+          >
+            <i class="ph-fill ph-hourglass"></i>
+          </div>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #fb923c;
+          "
+        >
+          <i class="ph ph-alert"></i> <span>Awaiting action</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Main Content Grid -->
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    "
+  >
+    <!-- Quick Actions Section -->
+    <div class="glass-card-heavy" style="padding: 1.5rem">
+      <h3
+        style="
+          color: var(--primary);
+          margin-bottom: 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph-bold ph-lightning" style="font-size: 1.2rem"></i>
+        Quick Actions
+      </h3>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 0.75rem;
+        "
+      >
+        <a
+          href="{{ url_for('manage_jobs') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-briefcase"
+            style="
+              font-size: 2rem;
+              color: var(--primary);
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Jobs</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Post & Manage
+          </p>
+        </a>
+
+        <a
+          href="{{ url_for('manage_announcements') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-megaphone"
+            style="
+              font-size: 2rem;
+              color: var(--secondary);
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Announcements</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Post Updates
+          </p>
+        </a>
+
+        <a
+          href="{{ url_for('view_applications') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-list-numbers"
+            style="
+              font-size: 2rem;
+              color: var(--accent);
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Applications</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Review All
+          </p>
+        </a>
+
+        {% if admin_level == 'super_admin' %}
+        <a
+          href="{{ url_for('manage_users') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-users"
+            style="
+              font-size: 2rem;
+              color: #8b5cf6;
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Users</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Manage All
+          </p>
+        </a>
+
+        <a
+          href="{{ url_for('view_login_history') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-clock-clockwise"
+            style="
+              font-size: 2rem;
+              color: #ec4899;
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Login History</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Activity Log
+          </p>
+        </a>
+        {% endif %}
+
+        <a
+          href="{{ url_for('students_activity') }}"
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+        >
+          <i
+            class="ph-bold ph-chart-line"
+            style="
+              font-size: 2rem;
+              color: #06b6d4;
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+          ></i>
+          <span style="font-weight: 600; font-size: 0.9rem">Activity</span>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--text-muted);
+              margin-top: 0.3rem;
+            "
+          >
+            Student Stats
+          </p>
+        </a>
+        
+        <a 
+          href="{{ url_for('export_applications') }}" 
+          class="glass-card"
+          style="padding: 1rem; text-align: center; transition: all 0.3s ease; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);"
+        >
+            <i class="ph-bold ph-download-simple" style="font-size: 2rem; color: #10b981; display: block; margin-bottom: 0.5rem;"></i>
+            <span style="font-weight: 600; font-size: 0.9rem; color: #10b981;">Student Applications</span>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem;">Export CSV</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Updates Sidebar -->
+    <div class="glass-card-heavy" style="padding: 1.5rem">
+      <h3
+        style="
+          color: var(--primary);
+          margin-bottom: 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph-bold ph-info" style="font-size: 1.2rem"></i>
+        Recent Updates
+      </h3>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem">
+        <div
+          style="
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+            border-radius: 6px;
+          "
+        >
+          <p style="font-size: 0.8rem; color: #10b981; font-weight: 600">
+            ✓ Last Login
+          </p>
+          <p style="font-size: 0.85rem; color: var(--text-main)">Just now</p>
+        </div>
+
+        <div
+          style="
+            padding: 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid var(--primary);
+            border-radius: 6px;
+          "
+        >
+          <p style="font-size: 0.8rem; color: var(--primary); font-weight: 600">
+            📊 System Status
+          </p>
+          <p style="font-size: 0.85rem; color: var(--text-main)">
+            All systems operational
+          </p>
+        </div>
+
+        <div
+          style="
+            padding: 0.75rem;
+            background: rgba(244, 63, 94, 0.1);
+            border-left: 3px solid #f43f5e;
+            border-radius: 6px;
+          "
+        >
+          <p style="font-size: 0.8rem; color: #f43f5e; font-weight: 600">
+            ⚡ Database
+          </p>
+          <p style="font-size: 0.85rem; color: var(--text-main)">
+            Healthy connection
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section - Charts/Info -->
+  <div class="glass-card-heavy" style="padding: 2rem">
+    <h3
+      style="
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      "
+    >
+      <i class="ph-bold ph-chart-bar" style="font-size: 1.2rem"></i>
+      Placement Statistics
+    </h3>
+
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+      "
+    >
+      <div
+        style="
+          text-align: center;
+          padding: 1.5rem;
+          background: rgba(99, 102, 241, 0.05);
+          border-radius: 12px;
+        "
+      >
+        <h4
+          style="
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Placement Rate
+        </h4>
+        <p style="color: var(--primary); font-size: 2.5rem; font-weight: 700">
+          85%
+        </p>
+        <p style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem">
+          <i class="ph ph-arrow-up"></i> +5% this month
+        </p>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          padding: 1.5rem;
+          background: rgba(6, 182, 212, 0.05);
+          border-radius: 12px;
+        "
+      >
+        <h4
+          style="
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Average Package
+        </h4>
+        <p style="color: #06b6d4; font-size: 2.5rem; font-weight: 700">
+          12.5 LPA
+        </p>
+        <p style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem">
+          <i class="ph ph-arrow-up"></i> Up from last year
+        </p>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          padding: 1.5rem;
+          background: rgba(244, 63, 94, 0.05);
+          border-radius: 12px;
+        "
+      >
+        <h4
+          style="
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Companies Hiring
+        </h4>
+        <p style="color: #f43f5e; font-size: 2.5rem; font-weight: 700">
+          {{ stats.total_jobs }}
+        </p>
+        <p style="color: #f43f5e; font-size: 0.8rem; margin-top: 0.5rem">
+          <i class="ph ph-info"></i> Active drives
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (max-width: 768px) {
+    [style*="grid-template-columns: 2fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    h1 {
+      font-size: 1.5rem !important;
+    }
+
+    h2 {
+      font-size: 1.8rem !important;
+    }
+
+    .glass-card-heavy {
+      padding: 1rem !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    [style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    h1 {
+      font-size: 1.3rem !important;
+    }
+
+    h2 {
+      font-size: 1.5rem !important;
+    }
+
+    .glass-card-heavy {
+      padding: 0.75rem !important;
+    }
+
+    [style*="display: flex"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      width: 100% !important;
+    }
+  }
+
+  .glass-card:hover {
+    transform: translateY(-5px);
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="PlacementCell" />
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='manifest.json') }}"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%236366f1' width='192' height='192'/><text x='50%' y='50%' font-size='80' fill='white' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>PC</text></svg>"
+    />
+    <title>{% block title %}Chetan Business School{% endblock %}</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/mobile-nav.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/dashboard-responsive.css') }}"
+    />
+    <!-- Phosphor Icons for premium icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script
+      src="{{ url_for('static', filename='js/offline-notifications.js') }}"
+      defer
+    ></script>
+    <script>
+      // Apply theme immediately to prevent flash
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemTheme;
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    {% block head %}{% endblock %}
+  </head>
+
+  <body>
+    {% if request.endpoint in ['login', 'signup', 'login_post', 'signup_post', 'forgot_password', 'reset_password'] %}
+    <!-- Simplified Navbar for Auth Pages -->
+    <nav class="navbar glass-navbar" style="justify-content: space-between;">
+      <a href="/" class="logo" style="text-decoration: none;">
+        <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="Logo">
+        <span>CHETAN BUSINESS <span class="highlight">SCHOOL</span></span>
+      </a>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode">
+        <i class="ph-fill ph-sun" id="theme-icon"></i>
+      </button>
+    </nav>
+    {% else %}
+    <!-- Full Navbar -->
+    <nav class="navbar glass-navbar">
+      <a href="/" class="logo" style="text-decoration: none;">
+        <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="Logo">
+        <span>CHETAN BUSINESS <span class="highlight">SCHOOL</span></span>
+      </a>
+     <div class="nav-links">
+        {% if session.get('user_id') %} {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('manage_jobs') }}">Jobs</a>
+        <a href="{{ url_for('manage_announcements') }}">Announcements</a>
+        {% else %}
+        <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('student_jobs') }}">Jobs</a>
+        <a href="{{ url_for('student_profile') }}">Profile</a>
+        <a href="{{ url_for('view_experiences') }}">Experiences</a>
+        <div class="notif-wrapper">
+          <button class="notif-btn" onclick="toggleNotifs(event)">
+            <i class="ph ph-bell"></i>
+            <span class="notif-badge" id="notif-badge"></span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">Notifications</div>
+            <div id="notif-list" class="notif-list">
+              <div class="notif-item">Loading...</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <a href="#" onclick="showLogoutModal(event)" class="btn-secondary"
+          >Logout</a
+        >
+        {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('signup') }}" class="btn-primary">Student Signup</a>
+        {% endif %}
+      </div>
+      <!-- Theme Toggle (Always visible) -->
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode">
+        <i class="ph-fill ph-moon"></i>
+      </button>
+    </nav>
+    {% endif %}
+
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %} {% block content %}{% endblock %}
+    </div>
+
+    {% if request.endpoint in ['login', 'signup', 'login_post', 'signup_post'] %}
+    <!-- Simplified Footer for Auth Pages -->
+    <footer style="
+        border-top: 1px solid var(--border);
+        padding: 2rem 0;
+        margin-top: 2rem;
+        text-align: center;
+        background: transparent;
+    ">
+      <div class="container" style="margin-top: 0; padding-top: 0; border: none;">
+         <p style="color: var(--text-muted); font-size: 0.85rem;">&copy; 2026 CHETAN BUSINESS SCHOOL. All rights reserved.</p>
+      </div>
+    </footer>
+    {% else %}
+    <!-- Global Simplified Footer -->
+    <footer style="
+        border-top: 1px solid var(--border);
+        padding: 2rem 0;
+        margin-top: 4rem;
+        text-align: center;
+        background: transparent;
+    ">
+      <div class="container" style="margin-top: 0; padding-top: 0; border: none;">
+         <p style="color: var(--text-muted); font-size: 0.85rem;">&copy; 2026 CHETAN BUSINESS SCHOOL. All rights reserved.</p>
+      </div>
+    </footer>
+    {% endif %}
+
+    <!-- PWA Install Prompt (Hidden by default) -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+      <div class="install-content">
+        <div class="install-icon">
+          <i class="ph-fill ph-download-simple"></i>
+        </div>
+        <div class="install-text">
+          <h4>Install App</h4>
+          <p>Add to home screen for better experience</p>
+        </div>
+      </div>
+      <button onclick="installPWA()" class="btn-sm btn-primary">Install</button>
+      <button onclick="closeInstallPrompt()" class="close-prompt-btn">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal-overlay">
+      <div class="modal-content glass-card">
+        <i
+          class="ph-bold ph-sign-out"
+          style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem"
+        ></i>
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to log out of your session?</p>
+        <div class="modal-actions">
+          <button onclick="confirmLogout()" class="btn-primary">Logout</button>
+          <button onclick="closeLogoutModal()" class="btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    {% if session.get('user_id') and request.endpoint not in ['login', 'signup', 'login_post', 'signup_post'] %}
+    <nav class="mobile-bottom-nav">
+      <div class="mobile-nav-container">
+        {% if session.get('role') == 'admin' %}
+        <a
+          href="{{ url_for('admin_dashboard') }}"
+          class="mobile-nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-house"></i>
+          <span>Home</span>
+        </a>
+        <a
+          href="{{ url_for('manage_jobs') }}"
+          class="mobile-nav-item {% if request.endpoint == 'manage_jobs' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-briefcase"></i>
+          <span>Jobs</span>
+        </a>
+        <a
+          href="{{ url_for('manage_users') }}"
+          class="mobile-nav-item center-item"
+        >
+          <i class="ph-fill ph-plus"></i>
+          <span>Users</span>
+        </a>
+        <a
+          href="{{ url_for('manage_announcements') }}"
+          class="mobile-nav-item {% if request.endpoint == 'manage_announcements' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-megaphone"></i>
+          <span>Broadcast</span>
+        </a>
+        <a
+          href="{{ url_for('view_applications') }}"
+          class="mobile-nav-item {% if request.endpoint == 'view_applications' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-list"></i>
+          <span>Apps</span>
+        </a>
+        {% else %}
+        <a
+          href="{{ url_for('student_jobs') }}"
+          class="mobile-nav-item {% if request.endpoint == 'student_jobs' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-briefcase"></i>
+          <span>Jobs</span>
+        </a>
+        <a
+          href="{{ url_for('view_experiences') }}"
+          class="mobile-nav-item {% if request.endpoint == 'view_experiences' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-star"></i>
+          <span>Stories</span>
+        </a>
+        <a
+          href="{{ url_for('student_dashboard') }}"
+          class="mobile-nav-item center-item {% if request.endpoint == 'student_dashboard' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-house"></i>
+          <span>Home</span>
+        </a>
+        <a
+          href="{{ url_for('student_profile') }}"
+          class="mobile-nav-item {% if request.endpoint == 'student_profile' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-user"></i>
+          <span>Profile</span>
+        </a>
+        <a
+          href="#"
+          onclick="showLogoutModal(event)"
+          class="mobile-nav-item"
+        >
+          <i class="ph-fill ph-sign-out"></i>
+          <span>Logout</span>
+        </a>
+        {% endif %}
+      </div>
+    </nav>
+    {% endif %}
+
+    <!-- Service Worker Registration -->
+    <script>
+      // Register Service Worker
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/static/js/sw.js")
+            .then((registration) => {
+              console.log("Service Worker registered:", registration);
+            })
+            .catch((error) => {
+              console.log("Service Worker registration failed:", error);
+            });
+        });
+      }
+
+      // Theme Toggle Logic
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        updateThemeIcon(newTheme);
+      }
+      
+      function updateThemeIcon(theme) {
+        const btns = document.querySelectorAll('.theme-toggle-btn i');
+        btns.forEach(icon => {
+           // Reset animation
+           icon.classList.remove('theme-icon-enter');
+           void icon.offsetWidth; // trigger reflow
+           
+           if(theme === 'dark') {
+               icon.className = 'ph-fill ph-sun theme-icon-enter';
+           } else {
+               icon.className = 'ph-fill ph-moon theme-icon-enter';
+           }
+        });
+      }
+      
+      // Initialize icon on load
+      document.addEventListener('DOMContentLoaded', () => {
+         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+         updateThemeIcon(currentTheme);
+         requestNotificationPermission();
+      });
+
+      // PWA Install Logic
+      let deferredPrompt;
+      const installPrompt = document.getElementById('installPrompt');
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        
+        // Show the prompt logic:
+        // Check if user has dismissed it recently (optional, skipping for now to ensure visibility)
+        showInstallPrompt();
+      });
+
+      function showInstallPrompt() {
+          if(installPrompt) {
+              installPrompt.style.display = 'flex';
+              // Add simple animation class
+              setTimeout(() => installPrompt.classList.add('visible'), 100);
+          }
+      }
+
+      function closeInstallPrompt() {
+          if(installPrompt) {
+              installPrompt.classList.remove('visible');
+              setTimeout(() => installPrompt.style.display = 'none', 300);
+          }
+      }
+
+      async function installPWA() {
+        if (!deferredPrompt) {
+            return;
+        }
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // We've used the prompt, and can't use it again, throw it away
+        deferredPrompt = null;
+        closeInstallPrompt();
+      }
+
+      window.addEventListener('appinstalled', () => {
+        // Hide the app-provided install promotion
+        closeInstallPrompt();
+        deferredPrompt = null;
+        console.log('PWA was installed');
+      });
+    </script>
+  </body>
+</html>

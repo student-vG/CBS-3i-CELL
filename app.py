@@ -1,0 +1,1459 @@
+from flask import Flask, render_template, redirect, url_for, session, request, flash
+from utils.db import get_db
+from utils.auth import hash_password, verify_password, login_required
+import os
+from bson.objectid import ObjectId
+from werkzeug.utils import secure_filename
+import datetime
+import csv
+from io import StringIO
+from flask import make_response
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# Password Reset Serializer
+from itsdangerous import URLSafeTimedSerializer
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+# Config
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Initialize DB
+db = get_db()
+users_collection = db['users']
+students_collection = db['students']
+jobs_collection = db['jobs']
+applications_collection = db['applications']
+announcements_collection = db['announcements']
+experiences_collection = db['experiences']
+notifications_collection = db['notifications']
+login_logs_collection = db['login_logs']
+
+# Ensure unique index on email
+users_collection.create_index("email", unique=True)
+
+# Helpful indexes for jobs/announcements (safe to run repeatedly)
+try:
+    jobs_collection.create_index([('status', 1)])
+    jobs_collection.create_index([('created_at', -1)])
+    jobs_collection.create_index([('expires_at', 1)])
+    jobs_collection.create_index([('company_name', 'text'), ('role', 'text'), ('description', 'text')])
+
+    announcements_collection.create_index([('status', 1)])
+    announcements_collection.create_index([('created_at', -1)])
+    announcements_collection.create_index([('expires_at', 1)])
+    announcements_collection.create_index([('title', 'text'), ('content', 'text')])
+except Exception:
+    # Index creation failure should not block app startup
+    pass
+
+# --- ROUTES ---
+
+@app.route('/')
+def home():
+    if 'user_id' in session:
+        if session.get('role') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('student_dashboard'))
+    return render_template('login.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login_post():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    role = request.form.get('role')
+    
+    user = users_collection.find_one({'email': email})
+    
+    if not user:
+        flash("Invalid email or password", "error")
+        return redirect(url_for('login'))
+    
+    # Verify role matches
+    if user.get('role') != role:
+        flash("Invalid role selected or user not found with this role", "error")
+        return redirect(url_for('login'))
+    
+    if verify_password(user['password'], password):
+        # Check if student is approved
+        if user['role'] == 'student' and not user.get('is_approved', False):
+            flash("Your account is pending admin approval. Please wait.", "error")
+            return redirect(url_for('login'))
+        
+        # Check if admin/faculty is approved
+        if user['role'] == 'admin' and not user.get('is_approved', False):
+            flash("Your admin account is pending super admin approval. Please wait.", "error")
+            return redirect(url_for('login'))
+        
+        session['user_id'] = str(user['_id'])
+        session['role'] = user['role']
+        session['email'] = user['email']
+        session['admin_level'] = user.get('admin_level', None)  # For admin hierarchy
+        
+        # Log login with timestamp
+        login_logs_collection.insert_one({
+            'user_id': user['_id'],
+            'email': email,
+            'role': user['role'],
+            'login_time': datetime.datetime.now(),
+            'ip_address': request.remote_addr
+        })
+        
+        # Update last login for user
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {'$set': {'last_login': datetime.datetime.now()}}
+        )
+        
+        if user['role'] == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            # Update student is_active status
+            students_collection.update_one(
+                {'user_id': user['_id']},
+                {'$set': {'last_login': datetime.datetime.now(), 'is_active': True}}
+            )
+            return redirect(url_for('student_dashboard'))
+    
+    flash("Invalid email or password", "error")
+    return redirect(url_for('login'))
+
+@app.route('/signup')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/signup', methods=['POST'])
+def signup_post():
+    try:
+        role = request.form.get('role')
+        
+        if role not in ['student', 'admin', 'faculty']:
+            flash("Invalid role selected", "error")
+            return redirect(url_for('signup'))
+        
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        if users_collection.find_one({'email': email}):
+            flash("Email already registered", "error")
+            return redirect(url_for('signup'))
+        
+        # Student Registration
+        if role == 'student':
+            branch = request.form.get('branch')
+            cgpa = float(request.form.get('cgpa'))
+            resume_file = request.files.get('resume')
+            
+            if not resume_file or resume_file.filename == '':
+                flash("Resume is required for students", "error")
+                return redirect(url_for('signup'))
+            
+            # Save Resume
+            resume_filename = f"{secure_filename(email)}_{secure_filename(resume_file.filename)}"
+            resume_path = os.path.join(app.config['UPLOAD_FOLDER'], resume_filename)
+            resume_file.save(resume_path)
+            
+            # Create User with registration time and is_approved flag
+            user_id = users_collection.insert_one({
+                'email': email,
+                'password': hash_password(password),
+                'role': 'student',
+                'is_approved': False,  # Admin approval required
+                'created_at': datetime.datetime.now()
+            }).inserted_id
+            
+            # Get College ID from form
+            student_id_code = request.form.get('college_id').strip().upper()
+            
+            # Check if Student ID already exists
+            if students_collection.find_one({'student_id': student_id_code}):
+                # cleanup user created above
+                users_collection.delete_one({'_id': user_id})
+                flash("Student ID already exists", "error")
+                return redirect(url_for('signup'))
+            
+            # Create Student Profile
+            students_collection.insert_one({
+                'user_id': user_id,
+                'student_id': student_id_code,
+                'name': name,
+                'branch': branch,
+                'cgpa': cgpa,
+                'resume_path': resume_filename,
+                'registered_at': datetime.datetime.now(),
+                'is_active': True
+            })
+            
+            # Notify all super admins about new student registration
+            super_admins = users_collection.find({'role': 'admin', 'admin_level': 'super_admin'})
+            for admin in super_admins:
+                notifications_collection.insert_one({
+                    'user_id': admin['_id'],
+                    'title': '📚 New Student Registration',
+                    'message': f"Student {name} ({email}) has registered. ID: {student_id_code}",
+                    'link': '/admin/manage-users',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'type': 'registration'
+                })
+            
+            flash("Registration successful! Pending admin approval. Please login once approved.", "success")
+        
+        # Admin/Faculty Registration
+        else:  # admin or faculty
+            admin_level = request.form.get('admin_level')
+            
+            if admin_level not in ['super_admin', 'faculty']:
+                flash("Invalid admin level selected", "error")
+                return redirect(url_for('signup'))
+            
+            # Create Admin/Faculty User with pending approval
+            user_id = users_collection.insert_one({
+                'email': email,
+                'password': hash_password(password),
+                'role': 'admin',
+                'admin_level': admin_level,
+                'is_approved': False,  # Super admin approval required
+                'created_at': datetime.datetime.now(),
+                'full_name': name
+            }).inserted_id
+            
+            # Notify all super admins about new admin/faculty registration
+            super_admins = users_collection.find({'role': 'admin', 'admin_level': 'super_admin'})
+            for admin in super_admins:
+                notifications_collection.insert_one({
+                    'user_id': admin['_id'],
+                    'title': '👤 New Admin Registration',
+                    'message': f"New {admin_level} registration from {name} ({email})",
+                    'link': '/admin/manage-admins',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'type': 'admin_registration'
+                })
+            
+            flash("Admin/Faculty registration successful! Pending super admin approval. Please wait for approval before logging in.", "success")
+        
+        return redirect(url_for('login'))
+
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+        return redirect(url_for('signup'))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = users_collection.find_one({'email': email})
+        
+        if user:
+            # Generate secure token (valid for 15 mins)
+            token = serializer.dumps(email, salt='password-reset-salt')
+            
+            # Since no SMTP is configured, we LOG the link
+            reset_link = url_for('reset_password', token=token, _external=True)
+            print(f"\n[MOCK EMAIL] Password Reset Link for {email}: {reset_link}\n")
+            
+            flash(f"If an account exists for {email}, a reset link has been sent (CHECK SERVER CONSOLE).", "info")
+        else:
+             # Don't reveal user existence
+            flash(f"If an account exists for {email}, a reset link has been sent.", "info")
+            
+        return redirect(url_for('login'))
+        
+    return render_template('forgot_password.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt='password-reset-salt', max_age=900) # 15 mins
+    except Exception:
+        flash("The reset link is invalid or has expired.", "error")
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(request.url)
+            
+        if len(password) < 6:
+             flash("Password must be at least 6 characters.", "error")
+             return redirect(request.url)
+             
+        # Update Password
+        users_collection.update_one(
+            {'email': email},
+            {'$set': {'password': hash_password(password)}}
+        )
+        
+        flash("Password reset successful! You can now login.", "success")
+        return redirect(url_for('login'))
+        
+    return render_template('reset_password.html', token=token)
+
+@app.route('/offline')
+def offline():
+    return render_template('offline.html')
+
+from utils.auth import hash_password, verify_password, login_required
+from utils.file_manager import remove_duplicates
+import os
+from bson.objectid import ObjectId
+
+# --- ADMIN ROUTES ---
+
+@app.route('/admin/cleanup-files', methods=['POST'])
+@login_required(role='admin')
+def cleanup_files():
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can perform system maintenance", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    upload_dir = os.path.join(app.root_path, 'static', 'uploads')
+    removed = remove_duplicates(upload_dir)
+    
+    if removed:
+        flash(f"Cleanup complete. Removed {len(removed)} duplicate files.", "success")
+    else:
+        flash("System is clean. No duplicate files found.", "info")
+            
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/dashboard')
+@login_required(role='admin')
+def admin_dashboard():
+    # Check if user is super admin or faculty
+    admin_level = session.get('admin_level')
+    
+    stats = {
+        'total_jobs': jobs_collection.count_documents({}),
+        'total_students': students_collection.count_documents({}),
+        'total_applications': applications_collection.count_documents({})
+    }
+    
+    # Chart Data: Application Status Distribution
+    pipeline = [
+        {'$group': {'_id': '$status', 'count': {'$sum': 1}}}
+    ]
+    status_counts = list(applications_collection.aggregate(pipeline))
+    chart_data = {item['_id']: item['count'] for item in status_counts}
+    # Ensure common statuses exist for the chart
+    for status in ['Applied', 'Shortlisted', 'Selected', 'Rejected']:
+        if status not in chart_data:
+            chart_data[status] = 0
+
+    jobs = list(jobs_collection.find().sort('created_at', -1).limit(5))
+    announcements = list(announcements_collection.find().sort('date', -1).limit(5))
+    
+    # Get pending students for approval (only super admins)
+    pending_students = []
+    if admin_level == 'super_admin':
+        pipeline = [
+            {'$match': {'is_approved': False}},
+            {'$lookup': {
+                'from': 'students',
+                'let': {'user_id': '$_id'},
+                'pipeline': [{'$match': {'$expr': {'$eq': ['$user_id', '$$user_id']}}}],
+                'as': 'student_info'
+            }},
+            {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}}
+        ]
+        pending_students = list(users_collection.aggregate(pipeline))
+    
+    return render_template('admin/dashboard.html', 
+                         stats=stats, 
+                         jobs=jobs, 
+                         announcements=announcements, 
+                         chart_data=chart_data,
+                         admin_level=admin_level,
+                         pending_students=pending_students)
+
+@app.route('/admin/jobs/add', methods=['POST'])
+@login_required(role='admin')
+def add_job():
+    # Check if user has permission (super_admin or faculty)
+    admin_level = session.get('admin_level')
+    if admin_level not in ['super_admin', 'faculty']:
+        flash("You don't have permission to post jobs", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    # Gather and validate form fields
+    try:
+        company = request.form.get('company', '').strip()
+        role_name = request.form.get('role', '').strip()
+        description = request.form.get('description', '').strip()
+        package = request.form.get('package', '').strip()
+        location = request.form.get('location', '').strip()
+        employment_type = request.form.get('employment_type', '').strip()
+        min_cgpa_str = request.form.get('min_cgpa', '')
+        drive_date_raw = request.form.get('drive_date', '')
+        expires_at_raw = request.form.get('expires_at', '')
+        action = request.form.get('action', 'draft')
+
+        # Basic required validations
+        if not company:
+            flash("Company name is required", "error")
+            return redirect(url_for('manage_jobs'))
+        
+        if not role_name:
+            flash("Job role is required", "error")
+            return redirect(url_for('manage_jobs'))
+        
+        if not description or len(description) < 20:
+            flash("Description is required and must be at least 20 characters", "error")
+            return redirect(url_for('manage_jobs'))
+
+        # Parse numeric fields
+        min_cgpa = 0.0
+        if min_cgpa_str:
+            try:
+                min_cgpa = float(min_cgpa_str)
+                if min_cgpa < 0 or min_cgpa > 10:
+                    min_cgpa = 0.0
+            except ValueError:
+                min_cgpa = 0.0
+
+        # Parse dates if provided
+        drive_date = None
+        expires_at = None
+        try:
+            if drive_date_raw:
+                drive_date = datetime.datetime.strptime(drive_date_raw, '%Y-%m-%d')
+        except Exception:
+            pass
+        
+        try:
+            if expires_at_raw:
+                expires_at = datetime.datetime.strptime(expires_at_raw, '%Y-%m-%d')
+        except Exception:
+            pass
+
+        job_doc = {
+            'company_name': company,
+            'role': role_name,
+            'description': description,
+            'package': package,
+            'location': location,
+            'employment_type': employment_type,
+            'min_cgpa': min_cgpa,
+            'drive_date': drive_date,
+            'expires_at': expires_at,
+            'created_by': session.get('email'),
+            'created_by_id': ObjectId(session['user_id']),
+            'author_role': admin_level,
+            'status': 'published' if action == 'publish' else 'draft',
+            'created_at': datetime.datetime.now(),
+            'updated_at': datetime.datetime.now(),
+            'published_at': datetime.datetime.now() if action == 'publish' else None
+        }
+
+        result = jobs_collection.insert_one(job_doc)
+
+        # Only notify students if the job is published
+        if action == 'publish':
+            students = list(students_collection.find({}, {'user_id': 1, 'name': 1}))
+            notifications = []
+            for s in students:
+                notifications.append({
+                    'user_id': s['user_id'],
+                    'title': f"🎯 New Job: {company}",
+                    'message': f"Position: {role_name}. Check the details and apply now!",
+                    'link': '/student/jobs',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'type': 'job_posting',
+                    'meta': {'job_id': str(result.inserted_id)}
+                })
+            if notifications:
+                notifications_collection.insert_many(notifications)
+            flash("Job published successfully! Notifications sent to all students.", "success")
+        else:
+            flash("Job saved as draft.", "success")
+
+        return redirect(url_for('manage_jobs'))
+
+    except Exception as e:
+        flash(f"Error posting job: {str(e)}", "error")
+        return redirect(url_for('manage_jobs'))
+
+# --- ADMIN USER MANAGEMENT ROUTES (Super Admin Only) ---
+
+@app.route('/admin/manage-users')
+@login_required(role='admin')
+def manage_users():
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can manage users", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get all users with their login history
+    pipeline = [
+        {
+            '$lookup': {
+                'from': 'students',
+                'let': {'user_id': '$_id'},
+                'pipeline': [{'$match': {'$expr': {'$eq': ['$user_id', '$$user_id']}}}],
+                'as': 'student_info'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'login_logs',
+                'let': {'user_id': '$_id'},
+                'pipeline': [
+                    {'$match': {'$expr': {'$eq': ['$user_id', '$$user_id']}}},
+                    {'$sort': {'login_time': -1}},
+                    {'$limit': 1}
+                ],
+                'as': 'last_login_info'
+            }
+        },
+        {'$sort': {'created_at': -1}}
+    ]
+    all_users = list(users_collection.aggregate(pipeline))
+    
+    # Format for display
+    for user in all_users:
+        user['_id'] = str(user['_id'])
+        if user.get('student_info'):
+            user['student_info'] = user['student_info'][0] if user['student_info'] else {}
+        if user.get('last_login_info'):
+            user['last_login_info'] = user['last_login_info'][0] if user['last_login_info'] else {}
+    
+    return render_template('admin/manage_users.html', users=all_users)
+
+@app.route('/admin/approve-student/<user_id>', methods=['POST'])
+@login_required(role='admin')
+def approve_student(user_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can approve students", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        users_collection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'is_approved': True, 'approved_at': datetime.datetime.now(), 'approved_by': session['email']}}
+        )
+        
+        # Send notification to student
+        student = students_collection.find_one({'user_id': ObjectId(user_id)})
+        if student:
+            notifications_collection.insert_one({
+                'user_id': ObjectId(user_id),
+                'title': 'Account Approved',
+                'message': f"Hello {student['name']}, your account has been approved! You can now login.",
+                'link': '/student/dashboard',
+                'is_read': False,
+                'created_at': datetime.datetime.now()
+            })
+        
+        flash("Student approved successfully!", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(url_for('manage_users'))
+
+@app.route('/admin/reject-student/<user_id>', methods=['POST'])
+@login_required(role='admin')
+def reject_student(user_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can reject students", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        users_collection.delete_one({'_id': ObjectId(user_id)})
+        students_collection.delete_one({'user_id': ObjectId(user_id)})
+        flash("Student rejected and removed", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(url_for('manage_users'))
+
+@app.route('/admin/manage-admins')
+@login_required(role='admin')
+def manage_admins():
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can manage admins", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get all admin users
+    admins = list(users_collection.find(
+        {'role': 'admin'},
+        {'email': 1, 'admin_level': 1, 'created_at': 1, 'is_approved': 1}
+    ).sort('created_at', -1))
+    
+    for admin in admins:
+        admin['_id'] = str(admin['_id'])
+    
+    # Separate pending and approved
+    pending = [a for a in admins if not a.get('is_approved', False)]
+    approved = [a for a in admins if a.get('is_approved', False)]
+    
+    return render_template('admin/manage_admins.html', admins=admins, pending=pending, approved=approved)
+
+@app.route('/admin/change-admin-level/<admin_id>', methods=['POST'])
+@login_required(role='admin')
+def change_admin_level(admin_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can change admin levels", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    new_level = request.form.get('level')  # 'super_admin' or 'faculty'
+    
+    if new_level not in ['super_admin', 'faculty']:
+        flash("Invalid admin level", "error")
+        return redirect(url_for('manage_admins'))
+    
+    try:
+        users_collection.update_one(
+            {'_id': ObjectId(admin_id)},
+            {'$set': {'admin_level': new_level}}
+        )
+        flash(f"Admin level changed to {new_level}", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(url_for('manage_admins'))
+
+@app.route('/admin/approve-admin/<admin_id>', methods=['POST'])
+@login_required(role='admin')
+def approve_admin(admin_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can approve admins", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        admin_user = users_collection.find_one({'_id': ObjectId(admin_id)})
+        users_collection.update_one(
+            {'_id': ObjectId(admin_id)},
+            {'$set': {'is_approved': True, 'approved_at': datetime.datetime.now(), 'approved_by': session['email']}}
+        )
+        
+        # Create notification for admin
+        notifications_collection.insert_one({
+            'user_id': ObjectId(admin_id),
+            'title': 'Admin Account Approved',
+            'message': f"Your admin account has been approved! You can now login as {admin_user.get('admin_level', 'faculty')}.",
+            'link': '/admin/dashboard',
+            'is_read': False,
+            'created_at': datetime.datetime.now()
+        })
+        
+        flash("Admin approved successfully!", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(url_for('manage_admins'))
+
+@app.route('/admin/reject-admin/<admin_id>', methods=['POST'])
+@login_required(role='admin')
+def reject_admin(admin_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can reject admins", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        users_collection.delete_one({'_id': ObjectId(admin_id)})
+        flash("Admin rejected and removed", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(url_for('manage_admins'))
+
+@app.route('/admin/view-login-history')
+@login_required(role='admin')
+def view_login_history():
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can view login history", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get login history for all users
+    logs = list(login_logs_collection.find().sort('login_time', -1).limit(500))
+    
+    for log in logs:
+        log['_id'] = str(log['_id'])
+        log['user_id'] = str(log['user_id'])
+    
+    return render_template('admin/login_history.html', logs=logs)
+
+@app.route('/admin/students-activity')
+@login_required(role='admin')
+def students_activity():
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can view student activity", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    # Get all students with last login info
+    pipeline = [
+        {
+            '$lookup': {
+                'from': 'login_logs',
+                'let': {'user_id': '$user_id'},
+                'pipeline': [
+                    {'$match': {'$expr': {'$eq': ['$user_id', '$$user_id']}}},
+                    {'$sort': {'login_time': -1}},
+                    {'$limit': 1}
+                ],
+                'as': 'last_login'
+            }
+        },
+        {'$sort': {'registered_at': -1}}
+    ]
+    
+    students = list(students_collection.aggregate(pipeline))
+    
+    for student in students:
+        student['_id'] = str(student['_id'])
+        student['user_id'] = str(student['user_id'])
+        student['last_login'] = student['last_login'][0] if student['last_login'] else None
+    
+    return render_template('admin/students_activity.html', students=students)
+
+@app.route('/admin/send-notification/<student_id>', methods=['POST'])
+@login_required(role='admin')
+def send_notification_to_student(student_id):
+    admin_level = session.get('admin_level')
+    if admin_level != 'super_admin':
+        flash("Only Super Admins can send notifications", "error")
+        return redirect(url_for('admin_dashboard'))
+    
+    title = request.form.get('title')
+    message = request.form.get('message')
+    
+    try:
+        notifications_collection.insert_one({
+            'user_id': ObjectId(student_id),
+            'title': title,
+            'message': message,
+            'link': '/student/dashboard',
+            'is_read': False,
+            'created_at': datetime.datetime.now(),
+            'sent_by_admin': session['email']
+        })
+        flash("Notification sent successfully!", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    
+    return redirect(request.referrer or url_for('admin_dashboard'))
+
+@app.route('/admin/jobs/manage')
+@login_required(role='admin')
+def manage_jobs():
+    jobs = list(jobs_collection.find().sort('created_at', -1))
+    
+    # Prepare jobs for both display (datetimes) and JSON (strings)
+    for job in jobs:
+        # Create a safe copy for JSON serialization
+        job_safe = job.copy()
+        for key, value in job_safe.items():
+            if isinstance(value, ObjectId):
+                job_safe[key] = str(value)
+            elif isinstance(value, datetime.datetime):
+                job_safe[key] = value.isoformat()
+        
+        # Attach the safe dictionary to the job object for the template to use
+        job['safe_data'] = job_safe
+
+    return render_template('admin/manage_jobs.html', jobs=jobs)
+
+@app.route('/admin/jobs/delete/<job_id>', methods=['POST'])
+@login_required(role='admin')
+def delete_job(job_id):
+    jobs_collection.delete_one({'_id': ObjectId(job_id)})
+    # Also delete associated applications
+    applications_collection.delete_many({'job_id': ObjectId(job_id)})
+    flash("Job and associated applications deleted", "success")
+    return redirect(url_for('manage_jobs'))
+
+
+
+
+@app.route('/admin/jobs/<job_id>/publish', methods=['POST'])
+@login_required(role='admin')
+def publish_job(job_id):
+    """Publish a draft job"""
+    try:
+        job = jobs_collection.find_one({'_id': ObjectId(job_id)})
+        if not job:
+            flash("Job not found", "error")
+            return redirect(url_for('manage_jobs'))
+        
+        # Check authorization
+        if str(job.get('created_by_id')) != session.get('user_id') and session.get('admin_level') not in ['super_admin', 'faculty']:
+            flash("You don't have permission to publish this job", "error")
+            return redirect(url_for('manage_jobs'))
+        
+        # Publish the job
+        jobs_collection.update_one(
+            {'_id': ObjectId(job_id)},
+            {'$set': {
+                'status': 'published',
+                'is_published': True,
+                'published_at': datetime.datetime.now(),
+                'updated_at': datetime.datetime.now()
+            }}
+        )
+        
+        # Send notifications
+        students = list(students_collection.find({}, {'user_id': 1}))
+        notifications = []
+        for s in students:
+            notifications.append({
+                'user_id': s['user_id'],
+                'title': f"New Job: {job.get('company_name')}",
+                'message': f"Position '{job.get('role')}' is now open for applications.",
+                'link': '/student/jobs',
+                'is_read': False,
+                'created_at': datetime.datetime.now(),
+                'meta': {'job_id': ObjectId(job_id)}
+            })
+        if notifications:
+            notifications_collection.insert_many(notifications)
+            
+        flash("Job published successfully!", "success")
+        return redirect(url_for('manage_jobs'))
+    except Exception as e:
+        flash(f"Error publishing job: {str(e)}", "error")
+        return redirect(url_for('manage_jobs'))
+
+
+
+@app.route('/admin/announcements/add', methods=['POST'])
+@login_required(role='admin')
+def add_announcement():
+    try:
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        category = request.form.get('category', 'General').strip()
+        priority = request.form.get('priority', 'normal').strip()
+        action = request.form.get('action', 'draft')
+        target_all_students = request.form.get('target_all_students') == 'on'
+        publish_date_raw = request.form.get('publish_date', '')
+        expiry_date_raw = request.form.get('expiry_date', '')
+
+        # Validation
+        if not title or len(title) < 3:
+            flash("Title is required and must be at least 3 characters", "error")
+            return redirect(url_for('manage_announcements'))
+        
+        if not content or len(content) < 20:
+            flash("Content is required and must be at least 20 characters", "error")
+            return redirect(url_for('manage_announcements'))
+
+        # Parse dates
+        published_at = None
+        expires_at = None
+        
+        if action == 'publish':
+            published_at = datetime.datetime.now()
+        
+        if expiry_date_raw:
+            try:
+                expires_at = datetime.datetime.fromisoformat(expiry_date_raw)
+            except Exception:
+                pass
+
+        ann = {
+            'title': title,
+            'content': content,
+            'category': category,
+            'priority': priority,
+            'created_by': session.get('email'),
+            'created_by_id': ObjectId(session['user_id']),
+            'author_role': session.get('admin_level'),
+            'status': 'published' if action == 'publish' else 'draft',
+            'target_all_students': target_all_students,
+            'created_at': datetime.datetime.now(),
+            'updated_at': datetime.datetime.now(),
+            'published_at': published_at,
+            'expires_at': expires_at
+        }
+
+        res = announcements_collection.insert_one(ann)
+
+        if action == 'publish' and target_all_students:
+            students = list(students_collection.find({}, {'user_id': 1, 'name': 1}))
+            notifications = []
+            priority_icon = '🚨' if priority == 'urgent' else '⚠️' if priority == 'high' else '📢'
+            for s in students:
+                notifications.append({
+                    'user_id': s['user_id'],
+                    'title': f"{priority_icon} {category}: {title}",
+                    'message': f"{content[:150]}..." if len(content) > 150 else content,
+                    'link': '/student/dashboard',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'type': 'announcement',
+                    'meta': {'announcement_id': str(res.inserted_id)}
+                })
+            if notifications:
+                notifications_collection.insert_many(notifications)
+            flash("Announcement published successfully! Notifications sent to all students.", "success")
+        else:
+            flash("Announcement saved successfully." if action == 'draft' else "Announcement published.", "success")
+
+        return redirect(url_for('manage_announcements'))
+
+    except Exception as e:
+        flash(f"Error creating announcement: {str(e)}", "error")
+        return redirect(url_for('manage_announcements'))
+
+
+@app.route('/admin/jobs/edit/<job_id>', methods=['POST'])
+@login_required(role='admin')
+def edit_job(job_id):
+    try:
+        job_obj = jobs_collection.find_one({'_id': ObjectId(job_id)})
+        if not job_obj:
+            flash("Job not found", "error")
+            return redirect(url_for('manage_jobs'))
+
+        # Authorization: allow if author or super_admin/faculty
+        admin_level = session.get('admin_level')
+        if str(job_obj.get('created_by_id')) != session.get('user_id') and admin_level not in ['super_admin', 'faculty']:
+            # allow admins with proper level
+            pass
+
+        # Update fields
+        company = request.form.get('company')
+        role_name = request.form.get('role')
+        description = request.form.get('description', '')
+        package = request.form.get('package', '')
+        location = request.form.get('location', '')
+        employment_type = request.form.get('employment_type', '')
+        min_cgpa = float(request.form.get('min_cgpa') or job_obj.get('min_cgpa', 0))
+        drive_date_raw = request.form.get('drive_date')
+        expires_at_raw = request.form.get('expires_at')
+        publish_action = request.form.get('action') == 'publish'
+
+        # Parse dates
+        try:
+            drive_date = datetime.datetime.fromisoformat(drive_date_raw) if drive_date_raw else job_obj.get('drive_date')
+        except Exception:
+            drive_date = drive_date_raw or job_obj.get('drive_date')
+        try:
+            expires_at = datetime.datetime.fromisoformat(expires_at_raw) if expires_at_raw else job_obj.get('expires_at')
+        except Exception:
+            expires_at = expires_at_raw or job_obj.get('expires_at')
+
+        update_doc = {
+            'company_name': company or job_obj.get('company_name'),
+            'role': role_name or job_obj.get('role'),
+            'description': description,
+            'package': package,
+            'location': location,
+            'employment_type': employment_type,
+            'min_cgpa': min_cgpa,
+            'drive_date': drive_date,
+            'expires_at': expires_at,
+            'status': 'published' if publish_action else job_obj.get('status', 'draft'),
+            'is_published': bool(publish_action) or job_obj.get('is_published', False),
+            'updated_at': datetime.datetime.now(),
+        }
+
+        if publish_action and not job_obj.get('is_published'):
+            update_doc['published_at'] = datetime.datetime.now()
+
+        jobs_collection.update_one({'_id': ObjectId(job_id)}, {'$set': update_doc})
+
+        # Notify on publish
+        if publish_action:
+            students = list(students_collection.find({}, {'user_id': 1}))
+            notifications = []
+            for s in students:
+                notifications.append({
+                    'user_id': s['user_id'],
+                    'title': f"Updated Job: {update_doc['company_name']}",
+                    'message': f"Position '{update_doc['role']}' has been published/updated.",
+                    'link': '/student/jobs',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'meta': {'job_id': ObjectId(job_id)}
+                })
+            if notifications:
+                notifications_collection.insert_many(notifications)
+
+        flash("Job updated successfully.", "success")
+        return redirect(url_for('manage_jobs'))
+
+    except Exception as e:
+        flash(f"Error updating job: {e}", "error")
+        return redirect(url_for('manage_jobs'))
+
+
+
+
+@app.route('/admin/announcements/manage')
+@login_required(role='admin')
+def manage_announcements():
+    announcements = list(announcements_collection.find().sort('created_at', -1))
+    
+    # Prepare for both display and JSON
+    for ann in announcements:
+        ann_safe = ann.copy()
+        for key, value in ann_safe.items():
+            if isinstance(value, ObjectId):
+                ann_safe[key] = str(value)
+            elif isinstance(value, datetime.datetime):
+                ann_safe[key] = value.isoformat()
+        ann['safe_data'] = ann_safe
+        
+    return render_template('admin/manage_announcements.html', announcements=announcements)
+
+@app.route('/admin/announcements/delete/<ann_id>', methods=['POST'])
+@login_required(role='admin')
+def delete_announcement(ann_id):
+    announcements_collection.delete_one({'_id': ObjectId(ann_id)})
+    flash("Announcement deleted", "success")
+    return redirect(url_for('manage_announcements'))
+
+@app.route('/admin/announcements/<ann_id>/edit', methods=['POST'])
+@login_required(role='admin')
+def edit_announcement(ann_id):
+    """Edit an existing announcement"""
+    try:
+        ann = announcements_collection.find_one({'_id': ObjectId(ann_id)})
+        if not ann:
+            flash("Announcement not found", "error")
+            return redirect(url_for('manage_announcements'))
+        
+        # Check authorization
+        if ann.get('created_by_id') != ObjectId(session['user_id']) and session.get('admin_level') != 'super_admin':
+            flash("You don't have permission to edit this announcement", "error")
+            return redirect(url_for('manage_announcements'))
+        
+        # Update fields
+        title = request.form.get('title', '').strip() or ann['title']
+        content = request.form.get('content', '').strip() or ann.get('content', '')
+        category = request.form.get('category', '').strip() or ann.get('category', 'General')
+        priority = request.form.get('priority', '').strip() or ann.get('priority', 'normal')
+        action = request.form.get('action', 'draft')
+        target_all_students = request.form.get('target_all_students') == 'on'
+        expiry_date_raw = request.form.get('expiry_date', '')
+        
+        # Parse expiry date
+        expires_at = ann.get('expires_at')
+        if expiry_date_raw:
+            try:
+                expires_at = datetime.datetime.fromisoformat(expiry_date_raw)
+            except Exception:
+                pass
+        
+        update_doc = {
+            'title': title,
+            'content': content,
+            'category': category,
+            'priority': priority,
+            'target_all_students': target_all_students,
+            'expires_at': expires_at,
+            'updated_at': datetime.datetime.now(),
+            'status': 'published' if action == 'publish' else ann.get('status', 'draft')
+        }
+        
+        # If publishing for the first time
+        if action == 'publish' and ann.get('status') != 'published':
+            update_doc['published_at'] = datetime.datetime.now()
+            # Notify students
+            if target_all_students:
+                students = list(students_collection.find({}, {'user_id': 1}))
+                notifications = []
+                priority_icon = '🚨' if priority == 'urgent' else '⚠️' if priority == 'high' else '📢'
+                for s in students:
+                    notifications.append({
+                        'user_id': s['user_id'],
+                        'title': f"{priority_icon} {category}: {title}",
+                        'message': f"{content[:150]}..." if len(content) > 150 else content,
+                        'link': '/student/dashboard',
+                        'is_read': False,
+                        'created_at': datetime.datetime.now(),
+                        'type': 'announcement',
+                        'meta': {'announcement_id': str(ann_id)}
+                    })
+                if notifications:
+                    notifications_collection.insert_many(notifications)
+        
+        announcements_collection.update_one({'_id': ObjectId(ann_id)}, {'$set': update_doc})
+        flash("Announcement updated successfully!", "success")
+        return redirect(url_for('manage_announcements'))
+    except Exception as e:
+        flash(f"Error updating announcement: {str(e)}", "error")
+        return redirect(url_for('manage_announcements'))
+
+@app.route('/admin/announcements/<ann_id>/publish', methods=['POST'])
+@login_required(role='admin')
+def publish_announcement(ann_id):
+    """Publish a draft announcement"""
+    try:
+        ann = announcements_collection.find_one({'_id': ObjectId(ann_id)})
+        if not ann:
+            flash("Announcement not found", "error")
+            return redirect(url_for('manage_announcements'))
+        
+        # Check authorization
+        if ann.get('created_by_id') != ObjectId(session['user_id']) and session.get('admin_level') != 'super_admin':
+            flash("You don't have permission to publish this announcement", "error")
+            return redirect(url_for('manage_announcements'))
+        
+        # Publish the announcement
+        announcements_collection.update_one(
+            {'_id': ObjectId(ann_id)},
+            {'$set': {
+                'status': 'published',
+                'published_at': datetime.datetime.now(),
+                'updated_at': datetime.datetime.now()
+            }}
+        )
+        
+        # Send notifications
+        if ann.get('target_all_students', True):
+            students = list(students_collection.find({}, {'user_id': 1}))
+            notifications = []
+            category = ann.get('category', 'General')
+            priority = ann.get('priority', 'normal')
+            priority_icon = '🚨' if priority == 'urgent' else '⚠️' if priority == 'high' else '📢'
+            for s in students:
+                notifications.append({
+                    'user_id': s['user_id'],
+                    'title': f"{priority_icon} {category}: {ann['title']}",
+                    'message': f"{ann.get('content', '')[:150]}...",
+                    'link': '/student/dashboard',
+                    'is_read': False,
+                    'created_at': datetime.datetime.now(),
+                    'type': 'announcement',
+                    'meta': {'announcement_id': str(ann_id)}
+                })
+            if notifications:
+                notifications_collection.insert_many(notifications)
+        
+        flash("Announcement published successfully!", "success")
+        return redirect(url_for('manage_announcements'))
+    except Exception as e:
+        flash(f"Error publishing announcement: {str(e)}", "error")
+        return redirect(url_for('manage_announcements'))
+
+@app.route('/admin/applications')
+@login_required(role='admin')
+def view_applications():
+    # Aggregate to get student and job details
+    pipeline = [
+        {
+            '$lookup': {
+                'from': 'students',
+                'let': {'student_id': '$student_id'},
+                'pipeline': [
+                    {'$match': {'$expr': {'$eq': ['$user_id', '$$student_id']}}}
+                ],
+                'as': 'student_info'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'jobs',
+                'localField': 'job_id',
+                'foreignField': '_id',
+                'as': 'job_info'
+            }
+        },
+        {'$unwind': '$student_info'},
+        {'$unwind': '$job_info'}
+    ]
+    applications = list(applications_collection.aggregate(pipeline))
+    return render_template('admin/applications.html', applications=applications)
+
+@app.route('/admin/applications/update/<app_id>', methods=['POST'])
+@login_required(role='admin')
+def update_application_status(app_id):
+    new_status = request.form.get('status')
+    applications_collection.update_one(
+        {'_id': ObjectId(app_id)},
+        {'$set': {'status': new_status}}
+    )
+    flash("Status updated", "success")
+    return redirect(url_for('view_applications'))
+
+@app.route('/admin/applications/export')
+@login_required(role='admin')
+def export_applications():
+    pipeline = [
+        {
+            '$lookup': {
+                'from': 'students',
+                'let': {'student_id': '$student_id'},
+                'pipeline': [{'$match': {'$expr': {'$eq': ['$user_id', '$$student_id']}}}],
+                'as': 'student_info'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'student_id',
+                'foreignField': '_id',
+                'as': 'user_info'
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'jobs',
+                'localField': 'job_id',
+                'foreignField': '_id',
+                'as': 'job_info'
+            }
+        },
+        {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}},
+        {'$unwind': {'path': '$user_info', 'preserveNullAndEmptyArrays': True}},
+        {'$unwind': {'path': '$job_info', 'preserveNullAndEmptyArrays': True}}
+    ]
+    apps = list(applications_collection.aggregate(pipeline))
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Student Name', 'Email', 'Branch', 'CGPA', 'Company', 'Role', 'Status', 'Applied At'])
+    
+    for app in apps:
+        cw.writerow([
+            app['student_info']['name'],
+            app['user_info'].get('email', 'N/A'),
+            app['student_info']['branch'],
+            app['student_info']['cgpa'],
+            app['job_info']['company_name'],
+            app['job_info']['role'],
+            app['status'],
+            app['applied_at'].strftime('%Y-%m-%d %H:%M')
+        ])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=applications_report.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+# --- STUDENT ROUTES ---
+
+@app.route('/student/dashboard')
+@login_required(role='student')
+def student_dashboard():
+    student = students_collection.find_one({'user_id': ObjectId(session['user_id'])})
+    if not student:
+        flash("Student profile not found", "error")
+        return redirect(url_for('logout'))
+    
+    # Get user info for login time
+    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    
+    # Get last login time from logs
+    last_login_log = login_logs_collection.find_one(
+        {'user_id': ObjectId(session['user_id'])},
+        sort=[('login_time', -1)]
+    )
+        
+    # Recent jobs (published ones)
+    recent_jobs = list(jobs_collection.find({'status': 'published'}).sort('published_at', -1).limit(5))
+    
+    # Announcements
+    announcements = list(announcements_collection.find({'status': 'published'}).sort('created_at', -1).limit(5))
+    
+    # My Applications with detailed info
+    pipeline = [
+        {
+            '$match': {'student_id': ObjectId(session['user_id'])}
+        },
+        {
+            '$lookup': {
+                'from': 'jobs',
+                'localField': 'job_id',
+                'foreignField': '_id',
+                'as': 'job_info'
+            }
+        },
+        {'$unwind': '$job_info'},
+        {'$sort': {'applied_at': -1}}
+    ]
+    my_applications = list(applications_collection.aggregate(pipeline))
+    applied_job_ids = [app['job_id'] for app in my_applications]
+    
+    # Count applications by status
+    shortlisted_count = sum(1 for app in my_applications if app.get('status') == 'Shortlisted')
+    selected_count = sum(1 for app in my_applications if app.get('status') == 'Selected')
+    
+    return render_template('student/dashboard.html', 
+                         student=student, 
+                         recent_jobs=recent_jobs, 
+                         announcements=announcements,
+                         my_applications=my_applications,
+                         applied_job_ids=applied_job_ids,
+                         shortlisted_count=shortlisted_count,
+                         selected_count=selected_count,
+                         user=user,
+                         last_login_log=last_login_log)
+
+@app.route('/student/profile')
+@login_required(role='student')
+def student_profile():
+    student = students_collection.find_one({'user_id': ObjectId(session['user_id'])})
+    return render_template('student/profile.html', student=student)
+
+@app.route('/student/jobs')
+@login_required(role='student')
+def student_jobs():
+    student = students_collection.find_one({'user_id': ObjectId(session['user_id'])})
+    all_jobs = list(jobs_collection.find().sort('created_at', -1))
+    
+    # My Applications to check status
+    my_applications = list(applications_collection.find({'student_id': ObjectId(session['user_id'])}))
+    applied_job_ids = [app['job_id'] for app in my_applications]
+
+    # Calculate predictive match scores
+    for job in all_jobs:
+        cgpa_factor = (student['cgpa'] / 10.0) * 100
+        # Simulated bonus for IT/CSE branch alignment
+        branch_bonus = 15 if student['branch'].lower() in job['role'].lower() or student['branch'].lower() == 'cse' else 5
+        job['match_score'] = min(100, round(cgpa_factor * 0.8 + branch_bonus))
+    
+    return render_template('student/jobs.html', student=student, jobs=all_jobs, applied_job_ids=applied_job_ids)
+
+@app.route('/student/experiences')
+@login_required(role='student')
+def view_experiences():
+    exps = list(experiences_collection.find().sort('date', -1))
+    return render_template('student/experiences.html', experiences=exps)
+
+@app.route('/student/experiences/add', methods=['POST'])
+@login_required(role='student')
+def add_experience():
+    company = request.form.get('company')
+    content = request.form.get('content')
+    student_name = students_collection.find_one({'user_id': ObjectId(session['user_id'])})['name']
+    
+    experiences_collection.insert_one({
+        'company': company,
+        'content': content,
+        'student_name': student_name,
+        'date': datetime.datetime.now()
+    })
+    flash("Experience shared successfully!", "success")
+    return redirect(url_for('view_experiences'))
+
+@app.route('/api/notifications')
+@login_required()
+def get_notifications():
+    # Only show for students for now, but system is extensible
+    user_id = ObjectId(session['user_id'])
+    notifications = list(notifications_collection.find({'user_id': user_id}).sort('created_at', -1).limit(10))
+    # Convert ObjectIds and Datetimes for JSON
+    for n in notifications:
+        n['_id'] = str(n['_id'])
+        n['user_id'] = str(n['user_id'])
+        n['created_at'] = n['created_at'].strftime('%b %d, %H:%M')
+    return {'notifications': notifications}
+
+@app.route('/api/notifications/read/<notif_id>', methods=['POST'])
+@login_required()
+def mark_read(notif_id):
+    notifications_collection.update_one(
+        {'_id': ObjectId(notif_id), 'user_id': ObjectId(session['user_id'])},
+        {'$set': {'is_read': True}}
+    )
+    return {'status': 'success'}
+
+@app.route('/api/notifications/sync', methods=['POST'])
+@login_required()
+def sync_notifications():
+    """Sync offline notifications"""
+    try:
+        data = request.get_json()
+        if data:
+            # Save notification to database
+            notifications_collection.insert_one({
+                'user_id': ObjectId(session['user_id']),
+                'title': data.get('title'),
+                'message': data.get('message'),
+                'link': data.get('link', '/'),
+                'is_read': False,
+                'created_at': datetime.datetime.now(),
+                'offline_synced': True
+            })
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
+@app.route('/student/apply/<job_id>', methods=['POST'])
+@login_required(role='student')
+def apply_job(job_id):
+    student_id = ObjectId(session['user_id'])
+    job_id = ObjectId(job_id)
+    
+    # Check if already applied
+    if applications_collection.find_one({'student_id': student_id, 'job_id': job_id}):
+        flash("You have already applied", "error")
+        return redirect(url_for('student_dashboard'))
+        
+    applications_collection.insert_one({
+        'student_id': student_id,
+        'job_id': job_id,
+        'status': 'Applied',
+        'applied_at': datetime.datetime.now()
+    })
+    flash("Applied successfully!", "success")
+    return redirect(url_for('student_dashboard'))
+
+@app.route('/student/update_resume', methods=['POST'])
+@login_required(role='student')
+def update_resume():
+    if 'resume' not in request.files:
+        flash("No file part", "error")
+        return redirect(url_for('student_dashboard'))
+        
+    file = request.files['resume']
+    if file.filename == '':
+        flash("No selected file", "error")
+        return redirect(url_for('student_dashboard'))
+
+    if file:
+        student = students_collection.find_one({'user_id': ObjectId(session['user_id'])})
+        
+        # Remove old file
+        old_filename = student.get('resume_path')
+        if old_filename:
+            old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+                
+        # Save new file
+        new_filename = f"{secure_filename(session['email'])}_{secure_filename(file.filename)}"
+        new_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+        file.save(new_path)
+        
+        # Update DB
+        students_collection.update_one(
+            {'user_id': ObjectId(session['user_id'])},
+            {'$set': {'resume_path': new_filename}}
+        )
+        
+        flash("Resume updated successfully!", "success")
+        return redirect(url_for('student_dashboard'))
+
+if __name__ == '__main__':
+    app.run(debug=True)

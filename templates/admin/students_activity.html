@@ -1,0 +1,184 @@
+{% extends 'base.html' %} {% block title %}Student Activity - Admin{% endblock
+%} {% block content %}
+<div class="container" style="margin-top: 2rem; margin-bottom: 2rem">
+  <div class="section-header">
+    <h1>Student Activity Monitor</h1>
+    <p>Track student registration and login activity</p>
+  </div>
+
+  <a
+    href="{{ url_for('admin_dashboard') }}"
+    class="btn-secondary"
+    style="margin-bottom: 1rem"
+    >← Back to Dashboard</a
+  >
+
+  <div class="glass-card-heavy" style="padding: 1.5rem">
+    <div style="overflow-x: auto">
+      <table style="width: 100%; border-collapse: collapse">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--secondary)">
+            <th style="padding: 0.75rem; text-align: left">Student ID</th>
+            <th style="padding: 0.75rem; text-align: left">Name</th>
+            <th style="padding: 0.75rem; text-align: left">Branch</th>
+            <th style="padding: 0.75rem; text-align: left">Registered</th>
+            <th style="padding: 0.75rem; text-align: left">Last Login</th>
+            <th style="padding: 0.75rem; text-align: left">Status</th>
+            <th style="padding: 0.75rem; text-align: left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if students %} {% for student in students %}
+          <tr style="border-bottom: 1px solid var(--border-color)">
+            <td style="padding: 0.75rem">
+              <strong>{{ student.student_id }}</strong>
+            </td>
+            <td style="padding: 0.75rem">{{ student.name }}</td>
+            <td style="padding: 0.75rem">{{ student.branch }}</td>
+            <td style="padding: 0.75rem">
+              {{ student.registered_at.strftime('%d-%m-%Y %H:%M') if
+              student.registered_at else 'N/A' }}
+            </td>
+            <td style="padding: 0.75rem">
+              {% if student.last_login %} {{
+              student.last_login.login_time.strftime('%d-%m-%Y %H:%M') }} {%
+              else %}
+              <span style="color: var(--text-secondary)">Never logged in</span>
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem">
+              {% if student.is_active %}
+              <span
+                style="
+                  padding: 0.25rem 0.75rem;
+                  border-radius: 20px;
+                  background: var(--success-light);
+                  color: var(--success);
+                "
+                >Active</span
+              >
+              {% else %}
+              <span
+                style="
+                  padding: 0.25rem 0.75rem;
+                  border-radius: 20px;
+                  background: var(--text-secondary);
+                  color: white;
+                "
+                >Inactive</span
+              >
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem">
+              <button
+                onclick="openNotificationModal('{{ student.user_id }}')"
+                class="btn-primary"
+                style="padding: 0.5rem 1rem"
+              >
+                📢 Notify
+              </button>
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td
+              colspan="7"
+              style="
+                padding: 1rem;
+                text-align: center;
+                color: var(--text-secondary);
+              "
+            >
+              No students found
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div
+  style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1600;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <div
+    style="
+      background: var(--surface-solid);
+      padding: 1.5rem;
+      border-radius: 12px;
+      width: 94%;
+      max-width: 560px;
+    "
+  >
+    <h2 style="margin-bottom: 0.75rem">Send Notification</h2>
+    <form id="notificationForm" method="POST" style="display: block">
+      <div style="margin-bottom: 1rem">
+        <label style="display: block; margin-bottom: 0.5rem">Title</label>
+        <input
+          type="text"
+          name="title"
+          required
+          class="w-100"
+          style="
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+          "
+        />
+      </div>
+      <div style="margin-bottom: 1rem">
+        <label style="display: block; margin-bottom: 0.5rem">Message</label>
+        <textarea
+          name="message"
+          rows="5"
+          required
+          class="w-100"
+          style="
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+          "
+        ></textarea>
+      </div>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end">
+        <button
+          type="button"
+          onclick="closeNotificationModal()"
+          class="btn-secondary"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openNotificationModal(studentId) {
+    // Ensure notification dropdown is closed to avoid overlay issues
+    const nDrop = document.getElementById("notif-dropdown");
+    if (nDrop) nDrop.style.display = "none";
+
+    const modal = document.getElementById("notificationModal");
+    const form = document.getElementById("notificationForm");
+    form.action = `/admin/send-notification/${studentId}`;
+    modal.style.display = "flex";
+  }
+
+  function closeNotificationModal() {
+    const modal = document.getElementById("notificationModal");
+    modal.style.display = "none";
+  }
+</script>
+{% endblock %}

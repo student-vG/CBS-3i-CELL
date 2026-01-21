@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Experiences - Chetan Business School{% endblock %}
+
+{% block content %}
+<div class="section-card glass-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h2><i class="ph-bold ph-chats-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>Interview
+                Experiences</h2>
+            <p class="text-muted" style="font-size: 0.9rem;">Learn from your peers and alumni who have gone through the
+                process.</p>
+        </div>
+        <button onclick="document.getElementById('addExpModal').style.display='flex'" class="btn-primary">
+            <i class="ph-bold ph-plus"></i> Share Your Experience
+        </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        {% if not experiences %}
+        <div
+            style="text-align: center; padding: 4rem; background: rgba(255,255,255,0.3); border-radius: var(--radius);">
+            <i class="ph ph-magnifying-glass"
+                style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <p class="text-muted">No experiences shared yet. Be the first to help others!</p>
+        </div>
+        {% endif %}
+
+        {% for exp in experiences %}
+        <div class="glass-card" style="padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 0.25rem;">{{ exp.company }}</h3>
+                    <div
+                        style="display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                        <span><i class="ph ph-user"></i> {{ exp.student_name }}</span>
+                        <span><i class="ph ph-calendar"></i> {{ exp.date.strftime('%d %b %Y') }}</span>
+                    </div>
+                </div>
+                <div class="badge" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">Verified Alumni
+                </div>
+            </div>
+            <div style="white-space: pre-wrap; line-height: 1.6;">{{ exp.content }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Experience Modal -->
+<div id="addExpModal" class="modal-overlay">
+    <div class="modal-content glass-card" style="max-width: 600px; text-align: left;">
+        <h3>Share Your Journey</h3>
+        <p class="text-muted" style="margin-bottom: 1.5rem;">Your insights can help fellow students land their dream
+            jobs.</p>
+
+        <form action="{{ url_for('add_experience') }}" method="POST">
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Company Name</label>
+                <input type="text" name="company" class="form-control" placeholder="e.g. Amazon, Google, TechCorp"
+                    required>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Interview Process & Tips</label>
+                <textarea name="content" class="form-control" rows="8"
+                    placeholder="Share rounds involved, types of questions asked, and your advice..."
+                    required></textarea>
+            </div>
+            <div class="modal-actions" style="justify-content: flex-end;">
+                <button type="button" onclick="document.getElementById('addExpModal').style.display='none'"
+                    class="btn-secondary">Cancel</button>
+                <button type="submit" class="btn-primary">Post Experience</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

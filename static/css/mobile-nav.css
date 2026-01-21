@@ -1,0 +1,386 @@
+/* Mobile Bottom Navigation Bar Styles */
+/* Force layout stability */
+@media (max-width: 992px) {
+  body {
+    padding-bottom: 80px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px; /* Fixed height to prevent jumping */
+  background: var(--surface-solid);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-strong);
+  z-index: 1000;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  display: none;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: content-box; /* Height + padding */
+}
+
+@media (max-width: 992px) {
+  .mobile-bottom-nav {
+    display: flex;
+    justify-content: center;
+  }
+  /* Navbar is now handled by style.css to show Logo + Toggle only */
+}
+
+.mobile-nav-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: 100%;
+  max-width: 600px;
+  height: 100%;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.mobile-nav-item i {
+  font-size: 1.5rem;
+  margin-bottom: 2px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+  color: var(--primary);
+}
+
+.mobile-nav-item.active i {
+  transform: translateY(-2px);
+  color: var(--primary);
+}
+
+/* Center Dashboard Button - Premium Floating Style */
+.mobile-nav-item.center-item {
+  position: relative;
+}
+
+.mobile-nav-item.center-item i {
+  position: absolute;
+  top: -24px;
+  width: 52px;
+  height: 52px;
+  background: var(--gradient);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white !important;
+  border: 4px solid var(--surface-solid); /* Cutout effect matches nav bg */
+  box-shadow: 0 8px 15px rgba(99, 102, 241, 0.35);
+  font-size: 1.4rem;
+  margin: 0;
+  z-index: 10;
+}
+
+/* Fix border color in dark mode/light mode */
+[data-theme="dark"] .mobile-nav-item.center-item i {
+    border-color: var(--surface-solid);
+}
+
+.mobile-nav-item.center-item span {
+  margin-top: 26px; /* Push text down below the floating button */
+  font-weight: 700;
+}
+
+.mobile-nav-item.center-item:hover i {
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: 0 12px 25px rgba(99, 102, 241, 0.5);
+}
+
+
+/* Animated Background */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Enhanced Shadows */
+.glass-card,
+.glass-card-heavy {
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 10px 20px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Button Animations */
+.btn-primary,
+.btn-secondary {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before,
+.btn-secondary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before,
+.btn-secondary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Enhanced Focus States */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.1),
+    0 0 0 1px var(--primary);
+}
+
+/* Smooth Hover Effects */
+.app-item {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.app-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Page Transition Animation */
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  animation: pageIn 0.4s ease-out;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+  h3 {
+    font-size: 18px;
+  }
+  p {
+    font-size: 14px;
+  }
+}
+
+/* Mobile Friendly Spacing */
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+
+  .glass-card,
+  .glass-card-heavy {
+    padding: 16px;
+    margin: 12px 0;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Enhanced Form Elements */
+.form-control {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-control:focus {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+/* Badge Animations */
+.status-dot {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Improved Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Touch-friendly targets */
+@media (hover: none) {
+  .btn-primary,
+  .btn-secondary,
+  a,
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --surface: rgba(15, 23, 42, 0.8);
+    --surface-solid: #1e293b;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+}
+
+/* Performance Optimization */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Safe Area Insets */
+@supports (padding: max(0px)) {
+  .mobile-bottom-nav {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  body {
+    padding-bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar,
+  .mobile-bottom-nav,
+  .btn-logout,
+  .btn-secondary {
+    display: none !important;
+  }
+}

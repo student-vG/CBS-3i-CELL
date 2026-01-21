@@ -1,0 +1,374 @@
+{% extends 'base.html' %} 
+
+{% block title %}Login - Chetan Business School{% endblock %} 
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <!-- Dynamic Background -->
+  <div class="background-decor-wrapper">
+    <div class="decor-circle circle-1"></div>
+    <div class="decor-circle circle-2"></div>
+    <div class="decor-circle circle-3"></div>
+  </div>
+
+  <div class="auth-card-container">
+    <!-- Header Section -->
+    <div class="auth-header-section">
+      <div class="brand-logo-container">
+        <i class="ph-bold ph-graduation-cap"></i>
+      </div>
+      <h1 class="auth-heading">Welcome Back</h1>
+      <p class="auth-subheading">Sign in to your placement portal</p>
+    </div>
+
+    <!-- Login Form -->
+    <form action="{{ url_for('login_post') }}" method="POST" class="auth-form-stack">
+      
+      <!-- Role Selection Card -->
+      <div class="input-group-card">
+  <label class="input-label">I am a</label>
+  <input type="hidden" name="role" id="role-input" value="student" />
+  <div class="role-selection" style="display:flex; gap:1rem;">
+    <div class="role-card" data-role="student" style="flex:1; padding:1rem; text-align:center; background:var(--surface-input); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer;">
+      <i class="ph ph-user" style="font-size:2rem; color:var(--primary);"></i><br/>Student
+    </div>
+    <div class="role-card" data-role="admin" style="flex:1; padding:1rem; text-align:center; background:var(--surface-input); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer;">
+      <i class="ph ph-users" style="font-size:2rem; color:var(--primary);"></i><br/>Admin / Faculty
+    </div>
+  </div>
+</div>
+<script>
+  const roleInput = document.getElementById('role-input');
+  document.querySelectorAll('.role-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.role-card').forEach(c => c.style.borderColor = 'var(--border)');
+      card.style.borderColor = 'var(--primary)';
+      roleInput.value = card.dataset.role;
+    });
+  });
+  // default highlight
+  document.querySelector('.role-card[data-role="student"]').style.borderColor = 'var(--primary)';
+</script>
+
+      <!-- Email Input -->
+      <div class="input-group-card">
+        <label for="email" class="input-label">Email Address</label>
+        <div class="custom-input-wrapper">
+          <i class="ph ph-envelope input-icon"></i>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            required 
+            placeholder="name@example.com"
+            class="custom-input-field"
+          />
+        </div>
+      </div>
+
+      <!-- Password Input -->
+      <div class="input-group-card">
+        <label for="password" class="input-label">Password</label>
+        <div class="custom-input-wrapper">
+          <i class="ph ph-lock-key input-icon"></i>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            placeholder="Enter your password"
+            class="custom-input-field"
+          />
+        </div>
+        <div class="forgot-pass-link">
+          <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="auth-submit-btn">
+        <span>Sign In</span>
+        <div class="btn-icon-circle">
+          <i class="ph-bold ph-arrow-right"></i>
+        </div>
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="auth-footer-section">
+      <p>Don't have an account? <a href="{{ url_for('signup') }}">Create Account</a></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* --- Layout & Container --- */
+  .auth-page-wrapper {
+    min-height: 100dvh; /* Mobile viewport fix */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+    /* background: var(--background); */
+    background: var(--background);
+    z-index: 1;
+  }
+
+  /* --- Background Decoration --- */
+  .background-decor-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .decor-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px); /* Smoother blur */
+    opacity: 0.5;
+    animation: float 12s ease-in-out infinite;
+  }
+
+  .circle-1 { top: -10%; left: -10%; width: 40vh; height: 40vh; background: #818cf8; animation-delay: 0s; }
+  .circle-2 { bottom: -10%; right: -10%; width: 50vh; height: 50vh; background: #f43f5e; animation-delay: -4s; }
+  .circle-3 { top: 40%; left: 30%; width: 30vh; height: 30vh; background: #06b6d4; animation-delay: -8s; opacity: 0.3; }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+  }
+
+  /* --- Card Design --- */
+  .auth-card-container {
+    width: 100%;
+    max-width: 420px;
+    /* background: rgba(255, 255, 255, 0.75); */
+    background: var(--surface);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 32px; /* Softer, more modern radius */
+    padding: 2.5rem;
+    box-shadow: 
+      var(--shadow-lg),
+      inset 0 0 0 1px var(--border);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    transform: translateZ(0); /* Hardware acceleration */
+  }
+
+  /* --- Typography & Header --- */
+  .auth-header-section {
+    text-align: center;
+  }
+
+  .brand-logo-container {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin: 0 auto 1.25rem;
+    box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.4);
+    transform: rotate(-5deg);
+  }
+
+  .auth-heading {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-subheading {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  /* --- Form Elements --- */
+  .auth-form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .input-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+    margin-left: 0.25rem;
+  }
+
+  .custom-input-wrapper, .custom-select-wrapper {
+    position: relative;
+    border-radius: 16px;
+    background: var(--surface-input);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+  }
+
+  .custom-input-wrapper:focus-within, .custom-select-wrapper:focus-within {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+
+  .custom-input-wrapper:focus-within .input-icon {
+    color: var(--primary);
+  }
+
+  .custom-input-field {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3.25rem;
+    border: 1px solid transparent; /* Border handled by wrapper */
+    border-radius: 16px;
+    background: transparent;
+    font-size: 1rem;
+    color: var(--text-main);
+    outline: none;
+    font-weight: 500;
+  }
+
+  .custom-input-field::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  .select-chevron {
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  select.custom-input-field {
+    appearance: none;
+    cursor: pointer;
+  }
+
+  /* --- Links & Actions --- */
+  .forgot-pass-link {
+    text-align: right;
+    margin-top: 0.5rem;
+  }
+
+  .forgot-pass-link a {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .forgot-pass-link a:hover {
+    color: var(--primary);
+  }
+
+  .auth-submit-btn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .auth-submit-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+    background: #4f46e5;
+  }
+
+  .btn-icon-circle {
+    width: 42px;
+    height: 42px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  /* --- Footer --- */
+  .auth-footer-section {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .auth-footer-section p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .auth-footer-section a {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 0.25rem;
+  }
+
+  /* --- Mobile Optimization --- */
+  @media (max-width: 480px) {
+    .auth-page-wrapper {
+      padding: 1rem;
+      align-items: flex-end; /* Bottom sheet feel on very small screens? No, center is safer */
+      align-items: center;
+    }
+
+    .auth-card-container {
+      padding: 2rem 1.5rem;
+      border-radius: 28px;
+    }
+
+    .auth-heading {
+      font-size: 1.5rem;
+    }
+
+    .custom-input-field {
+      padding-top: 0.875rem;
+      padding-bottom: 0.875rem;
+    }
+  }
+</style>
+{% endblock %}
