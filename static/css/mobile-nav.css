@@ -1,3 +1,96 @@
+/* Responsive logo caption for mobile nav */
+.logo-caption {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 0.1em;
+  margin-left: 0;
+  text-align: left;
+  max-width: 90vw;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Navbar Specific Overrides for Mobile */
+@media (max-width: 768px) {
+  /* Prevent full-width buttons in navbar */
+  .navbar .btn-secondary,
+  .navbar .theme-toggle-btn {
+    width: auto !important;
+    margin-bottom: 0 !important;
+    display: inline-flex !important;
+  }
+  
+  /* Force single line flex for navbar */
+  .navbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* Mobile Menu Overlay */
+/* Improved Mobile Top Nav */
+@media (max-width: 992px) {
+  .navbar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    padding: 0.75rem 1rem !important;
+    gap: 0.5rem;
+  }
+  
+  .logo img {
+    height: 32px !important;
+  }
+  
+  .logo span {
+    font-size: 1.1rem;
+  }
+  
+  /* Strictly hide subtitle on mobile for single line effect */
+  .logo-subtitle {
+    display: none !important;
+  }
+  
+  .nav-links {
+    display: none !important;
+  }
+}
+  
+/* Mobile Nav Control Tweaks */
+@media (max-width: 768px) {
+  .logout-text {
+    display: none;
+  }
+  
+  .btn-logout-top {
+    padding: 0.5rem !important;
+    background: transparent !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border);
+  }
+  
+  .btn-logout-top:hover {
+    background: var(--surface-hover) !important;
+    color: var(--danger) !important;
+  }
+  
+  .btn-logout-top i {
+    font-size: 1.25rem;
+  }
+}
+
+/* Ensure Navbar items align properly */
+.navbar {
+  justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap ;
+}
+
 /* Mobile Bottom Navigation Bar Styles */
 /* Force layout stability */
 @media (max-width: 992px) {
@@ -96,7 +189,7 @@
 
 /* Fix border color in dark mode/light mode */
 [data-theme="dark"] .mobile-nav-item.center-item i {
-    border-color: var(--surface-solid);
+  border-color: var(--surface-solid);
 }
 
 .mobile-nav-item.center-item span {
@@ -108,7 +201,6 @@
   transform: scale(1.1) rotate(-5deg);
   box-shadow: 0 12px 25px rgba(99, 102, 241, 0.5);
 }
-
 
 /* Animated Background */
 @keyframes slideUp {

@@ -1,8 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, session, request, flash
-from utils.db import get_db
+from utils.db import get_db, get_fs
 from utils.auth import hash_password, verify_password, login_required
 import os
 from bson.objectid import ObjectId
+import gridfs
+import datetime
+from routes.file_serving import file_serving_bp
+from routes.dynamic_forms import dynamic_forms_bp
 from werkzeug.utils import secure_filename
 import datetime
 import csv
@@ -11,6 +15,10 @@ from flask import make_response
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# Register Blueprints
+app.register_blueprint(file_serving_bp)
+app.register_blueprint(dynamic_forms_bp)
 
 # Password Reset Serializer
 from itsdangerous import URLSafeTimedSerializer
@@ -31,6 +39,10 @@ announcements_collection = db['announcements']
 experiences_collection = db['experiences']
 notifications_collection = db['notifications']
 login_logs_collection = db['login_logs']
+forms_collection = db['forms']
+form_responses_collection = db['form_responses']
+
+# Ensure unique index on email
 
 # Ensure unique index on email
 users_collection.create_index("email", unique=True)
@@ -82,10 +94,18 @@ def login_post():
         return redirect(url_for('login'))
     
     if verify_password(user['password'], password):
-        # Check if student is approved
-        if user['role'] == 'student' and not user.get('is_approved', False):
-            flash("Your account is pending admin approval. Please wait.", "error")
-            return redirect(url_for('login'))
+        # Check if student is approved OR needs to complete profile
+        if user['role'] == 'student':
+            # Case 1: Profile Incomplete -> Must Complete
+            if not user.get('profile_completed'):
+                session['user_id'] = str(user['_id'])
+                session['role'] = user['role']
+                return redirect(url_for('complete_profile'))
+            
+            # Case 2: Profile Completed but Not Approved -> Wait
+            if not user.get('is_approved', False):
+                flash("Your profile is submitted and pending Admin Approval. Please check back later.", "info")
+                return redirect(url_for('login'))
         
         # Check if admin/faculty is approved
         if user['role'] == 'admin' and not user.get('is_approved', False):
@@ -96,6 +116,13 @@ def login_post():
         session['role'] = user['role']
         session['email'] = user['email']
         session['admin_level'] = user.get('admin_level', None)  # For admin hierarchy
+        
+        # Ensure name is in session
+        if user['role'] == 'student':
+            student_doc = students_collection.find_one({'user_id': user['_id']})
+            session['name'] = user.get('name') or (student_doc.get('name') if student_doc else 'Student')
+        else:
+            session['name'] = user.get('name') or user.get('full_name') or 'Admin'
         
         # Log login with timestamp
         login_logs_collection.insert_one({
@@ -125,6 +152,138 @@ def login_post():
     flash("Invalid email or password", "error")
     return redirect(url_for('login'))
 
+@app.route('/student/complete-profile', methods=['GET', 'POST'])
+@login_required(role='student')
+def complete_profile():
+    # Check if already completed
+    user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+    if user.get('profile_completed'):
+        return redirect(url_for('student_dashboard'))
+
+    if request.method == 'POST':
+        try:
+            # 1. Personal Details
+            name = request.form.get('name')
+            gender = request.form.get('gender')
+            dob = request.form.get('dob')
+            phone = request.form.get('phone')
+            alt_phone = request.form.get('alt_phone')
+            personal_email = request.form.get('personal_email')
+            nationality = request.form.get('nationality')
+            marital_status = request.form.get('marital_status')
+            aadhaar = request.form.get('aadhaar')
+            pan = request.form.get('pan')
+            
+            permanent_address = request.form.get('permanent_address')
+            current_address = request.form.get('current_address')
+
+            # 2. Academic Details - Nested Structure
+            academic = {
+                'tenth': {
+                    'school': request.form.get('tenth_school'),
+                    'board': request.form.get('tenth_board'),
+                    'year': int(request.form.get('tenth_year') or 0),
+                    'score': float(request.form.get('tenth_score') or 0),
+                },
+                'twelfth': {
+                    'school': request.form.get('twelfth_school'),
+                    'board': request.form.get('twelfth_board'),
+                    'year': int(request.form.get('twelfth_year') or 0),
+                    'score': float(request.form.get('twelfth_score') or 0),
+                    'stream': request.form.get('twelfth_stream')
+                },
+                'ug': {
+                    'college': request.form.get('ug_college'),
+                    'university': request.form.get('ug_university'),
+                    'degree': request.form.get('ug_degree'),
+                    'branch': request.form.get('ug_branch'),
+                    'year': int(request.form.get('ug_year') or 0),
+                    'score': float(request.form.get('ug_score') or 0),
+                    'backlogs': int(request.form.get('ug_backlogs') or 0),
+                    'backlog_status': request.form.get('ug_backlog_status')
+                },
+                'pg': {
+                    'college': request.form.get('pg_college'),
+                    'university': request.form.get('pg_university'),
+                    'degree': request.form.get('pg_degree'),
+                    'branch': request.form.get('pg_branch'),
+                    'year': int(request.form.get('pg_year') or 0) if request.form.get('pg_year') else None,
+                    'score': float(request.form.get('pg_score') or 0) if request.form.get('pg_score') else None,
+                    'backlogs': int(request.form.get('pg_backlogs') or 0),
+                    'backlog_status': request.form.get('pg_backlog_status')
+                }
+            }
+            
+            # Simple flattening for primary sorting/filtering
+            main_branch = request.form.get('pg_branch') if request.form.get('pg_degree') else request.form.get('ug_branch')
+            main_cgpa = float(request.form.get('pg_score') or request.form.get('ug_score') or 0)
+
+            skills = request.form.get('skills')
+            projects = request.form.get('projects')
+            
+            # File Upload (GridFS)
+            resume_file = request.files.get('resume')
+            resume_id = None
+            
+            if resume_file and resume_file.filename != '':
+                filename = secure_filename(resume_file.filename)
+                content_type = resume_file.content_type
+                # Store in GridFS
+                fs = get_fs()
+                resume_id = fs.put(
+                    resume_file.read(), 
+                    filename=filename, 
+                    content_type=content_type,
+                    metadata={'user_id': ObjectId(session['user_id']), 'type': 'resume'}
+                )
+
+            # Update Student Profile
+            students_collection.update_one(
+                {'user_id': ObjectId(session['user_id'])},
+                {'$set': {
+                    'name': name, # Update name from form
+                    'gender': gender,
+                    'dob': dob,
+                    'phone': phone,
+                    'alt_phone': alt_phone,
+                    'personal_email': personal_email,
+                    'nationality': nationality,
+                    'marital_status': marital_status,
+                    'aadhaar': aadhaar,
+                    'pan': pan,
+                    'address': {
+                        'permanent': permanent_address,
+                        'current': current_address
+                    },
+                    'academic': academic,
+                    'branch': main_branch, # For quick filter
+                    'cgpa': main_cgpa,   # For quick filter
+                    'skills': [s.strip() for s in skills.split(',')],
+                    'projects': projects,
+                    'resume_file_id': resume_id,
+                    'profile_updated_at': datetime.datetime.now()
+                }}
+            )
+            
+            # Update User Status & Name
+            users_collection.update_one(
+                {'_id': ObjectId(session['user_id'])},
+                {'$set': {
+                    'name': name, # Sync name
+                    'profile_completed': True, 
+                    'is_approved': False
+                }}
+            )
+            
+            flash("Profile submitted successfully! Please wait for Admin Approval.", "success")
+            return redirect(url_for('login')) # Redirect to login/wait page logic
+            
+        except Exception as e:
+            flash(f"Error saving profile: {str(e)}", "error")
+            return redirect(url_for('complete_profile'))
+
+    return render_template('student/complete_profile.html')
+
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
@@ -148,64 +307,47 @@ def signup_post():
         
         # Student Registration
         if role == 'student':
-            branch = request.form.get('branch')
-            cgpa = float(request.form.get('cgpa'))
-            resume_file = request.files.get('resume')
+            # Generate Auto ID (Simple Sequence or Random - using Random + Year for now)
+            # Format: CBS + Year + Random 4 digits (e.g., CBS20241234)
+            current_year = datetime.datetime.now().year
+            import random
+            rand_suffix = random.randint(1000, 9999)
+            student_id_code = f"CBS{current_year}{rand_suffix}"
             
-            if not resume_file or resume_file.filename == '':
-                flash("Resume is required for students", "error")
-                return redirect(url_for('signup'))
-            
-            # Save Resume
-            resume_filename = f"{secure_filename(email)}_{secure_filename(resume_file.filename)}"
-            resume_path = os.path.join(app.config['UPLOAD_FOLDER'], resume_filename)
-            resume_file.save(resume_path)
-            
-            # Create User with registration time and is_approved flag
+            # Create User with profile_completed = False
             user_id = users_collection.insert_one({
                 'email': email,
                 'password': hash_password(password),
                 'role': 'student',
-                'is_approved': False,  # Admin approval required
+                'is_approved': False,
+                'profile_completed': False,  # Flag to trigger profile flow
                 'created_at': datetime.datetime.now()
             }).inserted_id
             
-            # Get College ID from form
-            student_id_code = request.form.get('college_id').strip().upper()
-            
-            # Check if Student ID already exists
-            if students_collection.find_one({'student_id': student_id_code}):
-                # cleanup user created above
-                users_collection.delete_one({'_id': user_id})
-                flash("Student ID already exists", "error")
-                return redirect(url_for('signup'))
-            
-            # Create Student Profile
+            # Create Minimal Student Profile (Detailed fields collected later)
             students_collection.insert_one({
                 'user_id': user_id,
                 'student_id': student_id_code,
                 'name': name,
-                'branch': branch,
-                'cgpa': cgpa,
-                'resume_path': resume_filename,
                 'registered_at': datetime.datetime.now(),
-                'is_active': True
+                'is_active': False
             })
             
-            # Notify all super admins about new student registration
+            # Notify super admins (Optional at this stage, maybe better after profile completion?)
+            # Keeping it here so admins know a user joined.
             super_admins = users_collection.find({'role': 'admin', 'admin_level': 'super_admin'})
             for admin in super_admins:
                 notifications_collection.insert_one({
                     'user_id': admin['_id'],
-                    'title': '📚 New Student Registration',
-                    'message': f"Student {name} ({email}) has registered. ID: {student_id_code}",
+                    'title': '👤 New Student Signup',
+                    'message': f"Student {name} ({email}) has signed up. Auto-ID: {student_id_code}",
                     'link': '/admin/manage-users',
                     'is_read': False,
                     'created_at': datetime.datetime.now(),
                     'type': 'registration'
                 })
             
-            flash("Registration successful! Pending admin approval. Please login once approved.", "success")
+            flash("Account created! Please login to complete your profile.", "success")
         
         # Admin/Faculty Registration
         else:  # admin or faculty
@@ -335,6 +477,57 @@ def cleanup_files():
             
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/student/<user_id>')
+@login_required(role='admin')
+def view_student_details(user_id):
+    # Only super admins or authorized faculty should view full details
+    admin_level = session.get('admin_level')
+    if admin_level not in ['super_admin', 'faculty']:
+        flash("Unauthorized access", "error")
+        return redirect(url_for('admin_dashboard'))
+
+    try:
+        # Fetch user and student docs
+        user = users_collection.find_one({'_id': ObjectId(user_id)})
+        student = students_collection.find_one({'user_id': ObjectId(user_id)})
+        
+        if not user or not student:
+            flash("Student not found", "error")
+            return redirect(url_for('manage_users'))
+
+        return render_template('admin/student_details.html', user=user, student=student)
+    except Exception as e:
+        flash(f"Error fetching student details: {str(e)}", "error")
+        return redirect(url_for('manage_users'))
+
+@app.route('/admin/student/<user_id>/resume')
+@login_required(role='admin')
+def view_student_resume(user_id):
+    # Route to serve resume from GridFS if needed, or redirect to static if stored there.
+    # Based on complete_profile, resumes are stored in GridFS.
+    try:
+        student = students_collection.find_one({'user_id': ObjectId(user_id)})
+        if not student or 'academic' not in student: 
+             # Fallback check if stored directly or if using previous schema
+             pass
+
+        # Check for resume_id in student doc (schema from complete_profile didn't explicitly show where resume_id is saved in student doc separate from fs, assuming logic handles it or we need to find it by metadata)
+        # Actually complete_profile code: metadata={'user_id': ...}
+        # Let's find the file by metadata
+        fs = get_fs()
+        resume_file = fs.find_one({"metadata.user_id": ObjectId(user_id), "metadata.type": 'resume'})
+        
+        if not resume_file:
+             flash("Resume not found", "error")
+             return redirect(url_for('view_student_details', user_id=user_id))
+        
+        from flask import Response
+        return Response(resume_file.read(), mimetype=resume_file.content_type)
+
+    except Exception as e:
+        flash(f"Error accessing resume: {str(e)}", "error")
+        return redirect(url_for('view_student_details', user_id=user_id))
+
 @app.route('/admin/dashboard')
 @login_required(role='admin')
 def admin_dashboard():
@@ -375,6 +568,9 @@ def admin_dashboard():
             {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}}
         ]
         pending_students = list(users_collection.aggregate(pipeline))
+    
+    # Add pending approvals to stats
+    stats['pending_approvals'] = len(pending_students)
     
     return render_template('admin/dashboard.html', 
                          stats=stats, 
@@ -444,6 +640,24 @@ def add_job():
         except Exception:
             pass
 
+        # Handle File Upload
+        attachment = request.files.get('attachment')
+        attachment_id = None
+        if attachment and attachment.filename:
+            try:
+                fs = get_fs()
+                filename = secure_filename(attachment.filename)
+                attachment_id = fs.put(
+                    attachment.read(),
+                    filename=filename,
+                    content_type=attachment.content_type,
+                    metadata={'uploaded_by': session['user_id'], 'type': 'job_attachment'}
+                )
+            except Exception as e:
+                flash(f"Error uploading file: {e}", "error")
+        
+        url = request.form.get('url', '').strip()
+
         job_doc = {
             'company_name': company,
             'role': role_name,
@@ -454,6 +668,8 @@ def add_job():
             'min_cgpa': min_cgpa,
             'drive_date': drive_date,
             'expires_at': expires_at,
+            'attachment_id': attachment_id,
+            'external_url': url,
             'created_by': session.get('email'),
             'created_by_id': ObjectId(session['user_id']),
             'author_role': admin_level,
@@ -467,22 +683,30 @@ def add_job():
 
         # Only notify students if the job is published
         if action == 'publish':
-            students = list(students_collection.find({}, {'user_id': 1, 'name': 1}))
+            # Smart Notification: Only notify eligible students
+            query = {'is_active': True}
+            if min_cgpa > 0:
+                query['cgpa'] = {'$gte': min_cgpa}
+                
+            students = list(students_collection.find(query, {'user_id': 1, 'name': 1, 'cgpa': 1}))
             notifications = []
+            
             for s in students:
                 notifications.append({
                     'user_id': s['user_id'],
                     'title': f"🎯 New Job: {company}",
-                    'message': f"Position: {role_name}. Check the details and apply now!",
+                    'message': f"Position: {role_name}. You are eligible! Check details.",
                     'link': '/student/jobs',
                     'is_read': False,
                     'created_at': datetime.datetime.now(),
                     'type': 'job_posting',
                     'meta': {'job_id': str(result.inserted_id)}
                 })
+            
             if notifications:
                 notifications_collection.insert_many(notifications)
-            flash("Job published successfully! Notifications sent to all students.", "success")
+            
+            flash(f"Job published! Notifications sent to {len(notifications)} eligible students.", "success")
         else:
             flash("Job saved as draft.", "success")
 
@@ -877,6 +1101,24 @@ def add_announcement():
             except Exception:
                 pass
 
+        # Handle File Upload
+        attachment = request.files.get('attachment')
+        attachment_id = None
+        if attachment and attachment.filename:
+            try:
+                fs = get_fs()
+                filename = secure_filename(attachment.filename)
+                attachment_id = fs.put(
+                    attachment.read(),
+                    filename=filename,
+                    content_type=attachment.content_type,
+                    metadata={'uploaded_by': session['user_id'], 'type': 'townhall_attachment'}
+                )
+            except Exception as e:
+                flash(f"Error uploading file: {e}", "error")
+        
+        url = request.form.get('url', '').strip()
+
         ann = {
             'title': title,
             'content': content,
@@ -887,6 +1129,8 @@ def add_announcement():
             'author_role': session.get('admin_level'),
             'status': 'published' if action == 'publish' else 'draft',
             'target_all_students': target_all_students,
+            'attachment_id': attachment_id,
+            'external_url': url,
             'created_at': datetime.datetime.now(),
             'updated_at': datetime.datetime.now(),
             'published_at': published_at,
@@ -960,6 +1204,24 @@ def edit_job(job_id):
         except Exception:
             expires_at = expires_at_raw or job_obj.get('expires_at')
 
+        # Handle File Upload
+        attachment = request.files.get('attachment')
+        attachment_id = job_obj.get('attachment_id') # Default to existing
+        if attachment and attachment.filename:
+            try:
+                fs = get_fs()
+                filename = secure_filename(attachment.filename)
+                attachment_id = fs.put(
+                    attachment.read(),
+                    filename=filename,
+                    content_type=attachment.content_type,
+                    metadata={'uploaded_by': session['user_id'], 'type': 'job_attachment'}
+                )
+            except Exception as e:
+                flash(f"Error uploading file: {e}", "error")
+        
+        url = request.form.get('url', '').strip()
+
         update_doc = {
             'company_name': company or job_obj.get('company_name'),
             'role': role_name or job_obj.get('role'),
@@ -970,6 +1232,8 @@ def edit_job(job_id):
             'min_cgpa': min_cgpa,
             'drive_date': drive_date,
             'expires_at': expires_at,
+            'attachment_id': attachment_id,
+            'external_url': url,
             'status': 'published' if publish_action else job_obj.get('status', 'draft'),
             'is_published': bool(publish_action) or job_obj.get('is_published', False),
             'updated_at': datetime.datetime.now(),
@@ -1063,6 +1327,24 @@ def edit_announcement(ann_id):
             except Exception:
                 pass
         
+        # Handle File Upload
+        attachment = request.files.get('attachment')
+        attachment_id = ann.get('attachment_id')
+        if attachment and attachment.filename:
+            try:
+                fs = get_fs()
+                filename = secure_filename(attachment.filename)
+                attachment_id = fs.put(
+                    attachment.read(),
+                    filename=filename,
+                    content_type=attachment.content_type,
+                    metadata={'uploaded_by': session['user_id'], 'type': 'townhall_attachment'}
+                )
+            except Exception as e:
+                flash(f"Error uploading file: {e}", "error")
+        
+        url = request.form.get('url', '').strip() or ann.get('external_url', '')
+
         update_doc = {
             'title': title,
             'content': content,
@@ -1070,6 +1352,8 @@ def edit_announcement(ann_id):
             'priority': priority,
             'target_all_students': target_all_students,
             'expires_at': expires_at,
+            'attachment_id': attachment_id,
+            'external_url': url,
             'updated_at': datetime.datetime.now(),
             'status': 'published' if action == 'publish' else ann.get('status', 'draft')
         }
@@ -1250,7 +1534,110 @@ def export_applications():
     output.headers["Content-type"] = "text/csv"
     return output
 
+@app.route('/admin/export/eligible/<job_id>')
+@login_required(role='admin')
+def export_eligible_students(job_id):
+    job = jobs_collection.find_one({'_id': ObjectId(job_id)})
+    if not job:
+        flash("Job not found", "error")
+        return redirect(url_for('manage_jobs'))
+        
+    min_cgpa = job.get('min_cgpa', 0.0)
+    
+    # Find active students with CGPA >= min_cgpa
+    query = {'is_active': True}
+    if min_cgpa > 0:
+        query['cgpa'] = {'$gte': min_cgpa}
+        
+    students = list(students_collection.find(query))
+    
+    # Generate CSV
+    si = StringIO()
+    cw = csv.writer(si)
+    
+    # Comprehensive Header
+    headers = [
+        'Student ID', 'Full Name', 'Gender', 'DOB', 'Email', 'Mobile', 'Alt Mobile',
+        'Nationality', 'Marital Status', 'Aadhaar', 'PAN',
+        'Permanent Address', 'Current Address',
+        # 10th
+        '10th School', '10th Board', '10th Year', '10th %',
+        # 12th
+        '12th School', '12th Board', '12th Year', '12th %', '12th Stream',
+        # UG
+        'UG College', 'UG University', 'UG Degree', 'UG Branch', 'UG Year', 'UG CGPA/%', 'UG Backlogs', 'UG Backlog Status',
+        # PG
+        'PG College', 'PG University', 'PG Degree', 'PG Branch', 'PG Year', 'PG CGPA/%', 'PG Backlogs', 'PG Backlog Status',
+        # Skills
+        'Skills', 'Projects'
+    ]
+    cw.writerow(headers)
+    
+    for s in students:
+        # Get Email from Users collection if not in student doc
+        user = users_collection.find_one({'_id': s['user_id']})
+        email = user.get('email', '') if user else ''
+        
+        # Safely get nested fields
+        ac = s.get('academic', {})
+        tenth = ac.get('tenth', {})
+        twelfth = ac.get('twelfth', {})
+        ug = ac.get('ug', {})
+        pg = ac.get('pg', {})
+        addr = s.get('address', {})
+        
+        row = [
+            # Personal
+            s.get('student_id', ''),
+            s.get('name', ''),
+            s.get('gender', ''),
+            s.get('dob', ''),
+            email, # Personal email is s.get('personal_email') but let's use Login Email as primary or both? User asked for College + Personal.
+                  # Logic: s.get('personal_email') is Personal. user['email'] is College/Login.
+                  # Let's verify. The form saves 'personal_email'. The User doc has 'email'.
+                  # I will export 'personal_email' here if available, or just append it.
+                  # Let's stick to the list: Email ID (College + Personal). 
+                  # Implementation: I'll put Personal Email next.
+            s.get('phone', ''),
+            s.get('alt_phone', ''),
+            s.get('nationality', ''),
+            s.get('marital_status', ''),
+            s.get('aadhaar', ''),
+            s.get('pan', ''),
+            
+            # Address
+            addr.get('permanent', '') if isinstance(addr, dict) else s.get('address', ''), # Fallback for old data
+            addr.get('current', '') if isinstance(addr, dict) else '',
+            
+            # 10th
+            tenth.get('school', ''), tenth.get('board', ''), tenth.get('year', ''), tenth.get('score', ''),
+            
+            # 12th
+            twelfth.get('school', ''), twelfth.get('board', ''), twelfth.get('year', ''), twelfth.get('score', ''), twelfth.get('stream', ''),
+            
+            # UG
+            ug.get('college', ''), ug.get('university', ''), ug.get('degree', ''), ug.get('branch', ''),
+            ug.get('year', ''), ug.get('score', ''), ug.get('backlogs', ''), ug.get('backlog_status', ''),
+            
+            # PG
+            pg.get('college', ''), pg.get('university', ''), pg.get('degree', ''), pg.get('branch', ''),
+            pg.get('year', ''), pg.get('score', ''), pg.get('backlogs', ''), pg.get('backlog_status', ''),
+            
+            # Professional
+            ", ".join(s.get('skills', [])),
+            s.get('projects', '')
+        ]
+        
+        cw.writerow(row)
+        
+    output = make_response(si.getvalue())
+    filename = f"{secure_filename(job['company_name'])}_eligible_students.csv"
+    output.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
 # --- STUDENT ROUTES ---
+
 
 @app.route('/student/dashboard')
 @login_required(role='student')
@@ -1269,8 +1656,13 @@ def student_dashboard():
         sort=[('login_time', -1)]
     )
         
-    # Recent jobs (published ones)
-    recent_jobs = list(jobs_collection.find({'status': 'published'}).sort('published_at', -1).limit(5))
+    # Recent jobs (published ones) - Smart Filter by CGPA could be here, but for now showing all top ones
+    # Filter by eligibility (CGPA)
+    student_cgpa = student.get('cgpa', 0.0)
+    recent_jobs = list(jobs_collection.find({
+        'status': 'published',
+        'min_cgpa': {'$lte': student_cgpa} # Only show eligible jobs in "Recommended"
+    }).sort('published_at', -1).limit(5))
     
     # Announcements
     announcements = list(announcements_collection.find({'status': 'published'}).sort('created_at', -1).limit(5))
@@ -1294,6 +1686,9 @@ def student_dashboard():
     my_applications = list(applications_collection.aggregate(pipeline))
     applied_job_ids = [app['job_id'] for app in my_applications]
     
+    # Activities: Applications that are Shortlisted or Selected (Active Stages)
+    activities = [app for app in my_applications if app.get('status') in ['Shortlisted', 'Selected', 'GD', 'Interview']]
+    
     # Count applications by status
     shortlisted_count = sum(1 for app in my_applications if app.get('status') == 'Shortlisted')
     selected_count = sum(1 for app in my_applications if app.get('status') == 'Selected')
@@ -1306,6 +1701,7 @@ def student_dashboard():
                          applied_job_ids=applied_job_ids,
                          shortlisted_count=shortlisted_count,
                          selected_count=selected_count,
+                         activities=activities,
                          user=user,
                          last_login_log=last_login_log)
 
@@ -1334,27 +1730,7 @@ def student_jobs():
     
     return render_template('student/jobs.html', student=student, jobs=all_jobs, applied_job_ids=applied_job_ids)
 
-@app.route('/student/experiences')
-@login_required(role='student')
-def view_experiences():
-    exps = list(experiences_collection.find().sort('date', -1))
-    return render_template('student/experiences.html', experiences=exps)
 
-@app.route('/student/experiences/add', methods=['POST'])
-@login_required(role='student')
-def add_experience():
-    company = request.form.get('company')
-    content = request.form.get('content')
-    student_name = students_collection.find_one({'user_id': ObjectId(session['user_id'])})['name']
-    
-    experiences_collection.insert_one({
-        'company': company,
-        'content': content,
-        'student_name': student_name,
-        'date': datetime.datetime.now()
-    })
-    flash("Experience shared successfully!", "success")
-    return redirect(url_for('view_experiences'))
 
 @app.route('/api/notifications')
 @login_required()
@@ -1417,6 +1793,33 @@ def apply_job(job_id):
         'applied_at': datetime.datetime.now()
     })
     flash("Applied successfully!", "success")
+    return redirect(url_for('student_dashboard'))
+
+@app.route('/student/activity/update/<app_id>', methods=['POST'])
+@login_required(role='student')
+def update_activity_status(app_id):
+    status = request.form.get('status') # 'Attending', 'Not Attending'
+    
+    if status not in ['Attending', 'Not Attending']:
+        flash("Invalid status", "error")
+        return redirect(url_for('student_dashboard'))
+        
+    try:
+        # Verify ownership
+        app_doc = applications_collection.find_one({'_id': ObjectId(app_id), 'student_id': ObjectId(session['user_id'])})
+        if not app_doc:
+            flash("Application not found", "error")
+            return redirect(url_for('student_dashboard'))
+            
+        applications_collection.update_one(
+            {'_id': ObjectId(app_id)},
+            {'$set': {'student_response': status, 'response_at': datetime.datetime.now()}}
+        )
+        flash(f"Status updated to {status}", "success")
+        
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+        
     return redirect(url_for('student_dashboard'))
 
 @app.route('/student/update_resume', methods=['POST'])

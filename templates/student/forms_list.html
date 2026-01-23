@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="color: var(--primary); margin: 0;">Available Forms & Surveys</h2>
+    <a href="{{ url_for('student_dashboard') }}" class="btn-secondary">
+      <i class="ph-bold ph-arrow-left"></i> Back
+    </a>
+  </div>
+  
+  <div class="jobs-grid">
+    {% for form in forms %}
+    <div class="job-card glass-card">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="job-icon">
+          <i class="ph-duotone ph-clipboard-text" style="font-size: 2rem; color: var(--primary);"></i>
+        </div>
+        {% if form._id in submitted_ids %}
+        <span class="badge" style="background: var(--surface-heavy); color: var(--text-muted);">Submitted</span>
+        {% else %}
+        <span class="badge">Open</span>
+        {% endif %}
+      </div>
+      
+      <h3 class="mb-2">{{ form.title }}</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">{{ form.description }}</p>
+      
+      {% if form._id not in submitted_ids %}
+      <a href="{{ url_for('dynamic_forms.fill_form', form_id=form._id) }}" class="btn-primary w-100">
+        Fill Out Form
+      </a>
+      {% else %}
+      <button class="btn-secondary w-100" disabled>Already Submitted</button>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted">
+      <p>No active forms or surveys at the moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

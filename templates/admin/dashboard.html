@@ -28,7 +28,7 @@ School{% endblock %} {% block head %}
         Welcome back! Here's your placement management overview.
       </p>
     </div>
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap">
+    <div class="header-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap">
       {% if admin_level == 'super_admin' %}
       <a href="{{ url_for('view_applications') }}" class="btn-secondary">
         <i class="ph-bold ph-list"></i> Applications
@@ -696,7 +696,7 @@ School{% endblock %} {% block head %}
   </div>
 </div>
 
-<style>
+  <style>
   @media (max-width: 768px) {
     [style*="grid-template-columns: 2fr 1fr"] {
       grid-template-columns: 1fr !important;
@@ -735,16 +735,75 @@ School{% endblock %} {% block head %}
     [style*="display: flex"] {
       flex-direction: column !important;
       align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    /* Exception for small headers within cards that use flex */
+    .glass-card-heavy [style*="display: flex"],
+    .header-actions {
+        flex-direction: row !important;
+        align-items: center !important;
+        width: auto !important; /* Allow container to size to content */
     }
 
     .btn-primary,
     .btn-secondary {
       width: 100% !important;
     }
+
+    /* Prevent full width buttons in header actions */
+    .header-actions .btn-primary,
+    .header-actions .btn-secondary {
+        width: auto !important;
+        flex: 0 0 auto; /* Stop growing */
+        padding: 0.75rem 1.25rem !important; /* Adjust padding for mobile */
+    }
+
   }
 
   .glass-card:hover {
     transform: translateY(-5px);
   }
 </style>
+
+<!-- Pending Approvals Modal -->
+{% if admin_level == 'super_admin' and stats.pending_approvals > 0 %}
+<div id="pendingApprovalsModal" class="modal-overlay" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+  <div class="glass-card" style="padding: 2rem; max-width: 450px; width: 90%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+    <div style="width: 80px; height: 80px; background: rgba(251, 146, 60, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+        <i class="ph-fill ph-warning-circle" style="font-size: 3rem; color: #fb923c;"></i>
+    </div>
+    <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Pending Approvals</h3>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">There are <strong>{{ stats.pending_approvals }} student(s)</strong> waiting for account approval. Please review them.</p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button onclick="closePendingModal()" class="btn-secondary">Later</button>
+        <a href="{{ url_for('manage_users') }}" class="btn-primary">Review Now</a>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show modal with a slight delay for better UX
+        setTimeout(() => {
+            const modal = document.getElementById('pendingApprovalsModal');
+            if(modal) {
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+                modal.querySelector('.glass-card').style.transform = 'scale(1)';
+            }
+        }, 800);
+    });
+
+    function closePendingModal() {
+        const modal = document.getElementById('pendingApprovalsModal');
+        if(modal) {
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+            modal.querySelector('.glass-card').style.transform = 'scale(0.9)';
+        }
+    }
+</script>
+{% endif %}
 {% endblock %}

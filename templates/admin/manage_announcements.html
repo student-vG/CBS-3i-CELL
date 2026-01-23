@@ -1,867 +1,455 @@
-{% extends 'base.html' %} {% block title %}Manage Announcements - Chetan
-Business School{% endblock %} {% block content %}
+{% extends 'base.html' %} {% block title %}Town Hall - CBS 3i-cell{%
+endblock %} {% block content %}
 <div class="section-card glass-card">
   <div
     style="
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
       gap: 1rem;
     "
   >
     <div>
-      <h2 style="display: flex; align-items: center; gap: 0.5rem">
-        <i class="ph-bold ph-megaphone" style="color: var(--primary)"></i>
-        Announcements
+      <h2
+        style="
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: var(--primary);
+        "
+      >
+        <i class="ph-bold ph-building"></i> Town Hall
       </h2>
-      <div style="color: var(--text-muted); font-size: 0.95rem">
-        Create and manage campus announcements with version history
+      <div
+        style="
+          color: var(--text-muted);
+          font-size: 0.95rem;
+          margin-top: 0.25rem;
+        "
+      >
+        Official campus announcements, notices, and updates.
       </div>
     </div>
     <div
       style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap"
     >
-      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"
-        >← Back</a
-      >
-      <button class="btn-primary" onclick="openAnnouncementModal()">
-        <i class="ph ph-plus"></i> New Announcement
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
+        <i class="ph-bold ph-arrow-left"></i> Back
+      </a>
+      <button class="btn-primary" onclick="openModal()">
+        <i class="ph-bold ph-megaphone"></i> New Announcement
       </button>
     </div>
   </div>
 
   <!-- Filter/Status Tabs -->
   <div
-    style="
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 1rem;
-    "
+    class="status-tabs-container"
+    style="margin-bottom: 2rem; border-bottom: 1px solid var(--border)"
   >
-    <button
-      class="status-tab active"
-      onclick="filterAnnouncements(event, 'all')"
-      style="
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        color: var(--primary);
-        border-bottom: 2px solid var(--primary);
-        font-weight: 600;
-      "
-    >
-      All ({{ announcements|length }})
+    <button class="status-tab active" onclick="filterItems('all')">
+      All Updates ({{ announcements|length }})
     </button>
-    <button
-      class="status-tab"
-      onclick="filterAnnouncements(event, 'published')"
-      style="
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        color: var(--text-muted);
-        font-weight: 600;
-      "
-    >
+    <button class="status-tab" onclick="filterItems('published')">
       Published
     </button>
-    <button
-      class="status-tab"
-      onclick="filterAnnouncements(event, 'draft')"
-      style="
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        color: var(--text-muted);
-        font-weight: 600;
-      "
-    >
-      Draft
-    </button>
-    <button
-      class="status-tab"
-      onclick="filterAnnouncements(event, 'expired')"
-      style="
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        color: var(--text-muted);
-        font-weight: 600;
-      "
-    >
-      Expired
-    </button>
+    <button class="status-tab" onclick="filterItems('draft')">Drafts</button>
   </div>
 
-  <!-- Announcements List -->
-  <div style="display: flex; flex-direction: column; gap: 1rem">
-    {% for announcement in announcements %}
+  <!-- Grid -->
+  <div class="items-grid">
+    {% for ann in announcements %}
     <div
-      class="announcement-card glass-card announcement-item"
-      data-status="{{ announcement.status or 'draft' }}"
+      class="item-card glass-card item-card-element"
+      data-status="{{ ann.status or 'draft' }}"
+      style="
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        border-left: 4px solid var(--primary);
+      "
     >
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 1rem;
-        "
-      >
-        <div style="flex: 1">
-          <div
-            style="
-              display: flex;
-              gap: 0.75rem;
-              align-items: center;
-              margin-bottom: 0.5rem;
-            "
-          >
-            <!-- Status Badge -->
-            {% if announcement.status == 'published' %}
-            <span class="badge" style="background: #ecfeff; color: #036969"
-              >✓ Published</span
-            >
-            {% elif announcement.status == 'expired' %}
-            <span class="badge" style="background: #fee2e2; color: #dc2626"
-              >⊘ Expired</span
-            >
-            {% else %}
-            <span class="badge" style="background: #fff7ed; color: #b45309"
-              >◯ Draft</span
-            >
-            {% endif %} {% if announcement.category %}
+      <div style="flex: 1">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
             <span
               class="badge"
-              style="background: rgba(99, 102, 241, 0.1); color: var(--primary)"
-              >{{ announcement.category }}</span
+              style="
+                background: rgba(99, 102, 241, 0.1);
+                color: var(--primary);
+                margin-bottom: 0.5rem;
+                display: inline-block;
+              "
             >
-            {% endif %}
+              {{ ann.category or 'General' }}
+            </span>
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem">
+              {{ ann.title }}
+            </h3>
           </div>
-
-          <h3 style="margin-bottom: 0.5rem">{{ announcement.title }}</h3>
-
-          <p
-            style="
-              color: var(--text-muted);
-              margin-bottom: 0.75rem;
-              line-height: 1.5;
-            "
-          >
-            {{ announcement.content[:300] }}{% if announcement.content and
-            announcement.content|length > 300 %}...{% endif %}
-          </p>
-
-          <!-- Metadata -->
-          <div
-            style="
-              display: flex;
-              gap: 1.5rem;
-              font-size: 0.85rem;
-              color: var(--text-muted);
-              flex-wrap: wrap;
-            "
-          >
-            <div>
-              Created: {{ announcement.created_at.strftime('%d %b %Y %H:%M') if
-              announcement.created_at else 'N/A' }}
-            </div>
-            {% if announcement.published_at %}
-            <div>
-              Published: {{ announcement.published_at.strftime('%d %b %Y %H:%M')
-              if announcement.published_at else 'N/A' }}
-            </div>
-            {% endif %} {% if announcement.expires_at %}
-            <div>
-              Expires: {{ announcement.expires_at.strftime('%d %b %Y %H:%M') if
-              announcement.expires_at else 'N/A' }}
-            </div>
-            {% endif %}
-            <div>
-              By: {{ announcement.created_by }} ({{
-              announcement.author_role|title }})
-            </div>
-          </div>
+          {% if ann.status == 'published' %}
+          <i
+            class="ph-fill ph-check-circle"
+            style="color: #10b981; font-size: 1.5rem"
+            title="Published"
+          ></i>
+          {% else %}
+          <i
+            class="ph-fill ph-circle-dashed"
+            style="color: #f59e0b; font-size: 1.5rem"
+            title="Draft"
+          ></i>
+          {% endif %}
         </div>
 
-        <!-- Action Buttons -->
-        <div
+        <p
           style="
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: flex-end;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
           "
         >
-          <button
-            class="btn-secondary btn-sm"
-            onclick="openAnnouncementModal('{{ loop.index0 }}')"
+          {{ ann.content[:150] }}...
+        </p>
+
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          {% if ann.priority == 'urgent' %}
+          <span
+            class="badge"
+            style="background: rgba(239, 68, 68, 0.1); color: #ef4444"
+            ><i class="ph-bold ph-warning"></i> Urgent</span
           >
-            <i class="ph ph-pencil"></i> Edit
-          </button>
-          <button
-            class="btn-secondary btn-sm"
-            onclick="previewAnnouncement('{{ loop.index0 }}')"
+          {% endif %} {% if ann.attachment_id %}
+          <span class="badge badge-outline"
+            ><i class="ph-bold ph-paperclip"></i> File</span
           >
-            <i class="ph ph-eye"></i> Preview
-          </button>
-          {% if announcement.status != 'published' %}
-          <button
-            class="btn-primary btn-sm"
-            onclick="publishAnnouncementAction('{{ announcement._id }}')"
+          {% endif %} {% if ann.external_url %}
+          <span class="badge badge-outline"
+            ><i class="ph-bold ph-link"></i> Link</span
           >
-            <i class="ph ph-arrow-up"></i> Publish
-          </button>
           {% endif %}
-          <form
-            action="{{ url_for('delete_announcement', ann_id=announcement._id) }}"
-            method="POST"
-            onsubmit="return confirm('Delete this announcement?');"
-            style="margin: 0"
-          >
-            <button
-              type="submit"
-              class="btn-secondary btn-sm"
-              style="color: #ef4444; width: 100%"
-            >
-              <i class="ph ph-trash"></i> Delete
-            </button>
-          </form>
+        </div>
+
+        <div
+          style="
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 0.75rem;
+          "
+        >
+          Is Public:
+          <strong>{{ 'Yes' if ann.target_all_students else 'No' }}</strong> • {%
+          if ann.get('created_at') %} {{ ann.created_at.strftime('%d %b %H:%M')
+          }} {% else %} N/A {% endif %}
         </div>
       </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2 mt-3 pt-3 border-top">
+        <button
+          class="btn-sm btn-secondary flex-grow-1"
+          onclick="openModal({{ loop.index0 }})"
+        >
+          Edit
+        </button>
+        {% if ann.status != 'published' %}
+        <form
+          action="{{ url_for('publish_announcement', ann_id=ann._id) }}"
+          method="POST"
+          style="flex-grow: 1"
+        >
+          <button type="submit" class="btn-sm btn-primary w-100">
+            Publish
+          </button>
+        </form>
+        {% endif %}
+        <form
+          action="{{ url_for('delete_announcement', ann_id=ann._id) }}"
+          method="POST"
+          onsubmit="return confirm('Delete?');"
+        >
+          <button
+            type="submit"
+            class="btn-sm btn-secondary"
+            style="color: var(--accent)"
+          >
+            <i class="ph-bold ph-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div
+      style="
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+      "
+    >
+      <p>No town hall updates yet.</p>
     </div>
     {% endfor %}
-    {% if not announcements %}
-    <div style="text-align: center; padding: 2rem; color: var(--text-muted)">
-      <i class="ph-bold ph-megaphone" style="font-size: 3rem; opacity: 0.3"></i>
-      <p style="margin-top: 1rem">No announcements yet</p>
-    </div>
-    {% endif %}
   </div>
 </div>
 
-<!-- Enhanced Announcement Modal -->
-<div
-  id="announcementModal"
-  style="
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1700;
-    align-items: center;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 1rem;
-  "
->
+<!-- Modal -->
+<div id="annModal" class="modal-overlay">
   <div
-    style="
-      background: var(--surface-solid);
-      width: 95%;
-      max-width: 800px;
-      border-radius: 16px;
-      padding: 2rem;
-      margin: auto;
-      margin-top: 2rem;
-      margin-bottom: 2rem;
-    "
+    class="glass-card-heavy modal-content"
+    style="max-width: 600px; width: 95%; margin: auto"
   >
-    <div
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <h2 id="announcementModalTitle">New Announcement</h2>
-      <button
-        onclick="closeAnnouncementModal()"
-        style="
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 1.5rem;
-        "
-      >
-        ✕
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 id="modalTitle" style="color: var(--primary)">New Announcement</h2>
+      <button onclick="closeModal()" class="btn-icon">
+        <i class="ph-bold ph-x"></i>
       </button>
     </div>
 
     <form
-      id="announcementForm"
+      id="annForm"
       method="POST"
-      onsubmit="handleAnnouncementFormSubmit(event)"
+      enctype="multipart/form-data"
+      style="text-align: left"
     >
-      <input type="hidden" name="announcement_id" id="announcement_id" />
+      <style>
+        /* Local Form Override */
+        .form-group label {
+          text-align: left;
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--text-main);
+          font-weight: 600;
+        }
+        .form-control {
+          background: var(--surface-input) !important;
+          border: 1px solid var(--border) !important;
+          color: var(--text-main) !important;
+          padding: 0.75rem;
+          border-radius: 8px;
+        }
+        .form-control:focus {
+          border-color: var(--primary) !important;
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+          outline: none;
+        }
+      </style>
+      <input type="hidden" name="action" id="action" value="draft" />
 
-      <!-- Section: Basic Information -->
-      <div
-        style="
-          margin-bottom: 1.5rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px solid var(--border);
-        "
-      >
-        <h3 style="margin-bottom: 1rem; color: var(--primary)">
-          Announcement Details
-        </h3>
-        <div style="margin-bottom: 1rem">
-          <label style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-            >Title *</label
-          >
+      <div class="form-group mb-3">
+        <label class="form-label">Title *</label>
+        <input
+          type="text"
+          name="title"
+          id="title"
+          class="form-control"
+          required
+          placeholder="Header"
+        />
+      </div>
+
+      <div class="row">
+        <div class="col-6 form-group mb-3">
+          <label class="form-label">Category</label>
+          <select name="category" id="category" class="form-control">
+            <option value="General">General</option>
+            <option value="Academic">Academic</option>
+            <option value="Event">Event</option>
+            <option value="Placement">Placement</option>
+          </select>
+        </div>
+        <div class="col-6 form-group mb-3">
+          <label class="form-label">Priority</label>
+          <select name="priority" id="priority" class="form-control">
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Content *</label>
+        <textarea
+          name="content"
+          id="content"
+          rows="5"
+          class="form-control"
+          required
+          placeholder="Details..."
+        ></textarea>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Attachment (Optional)</label>
+        <input
+          type="file"
+          name="attachment"
+          id="attachment"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label">Link (Optional)</label>
+        <input
+          type="url"
+          name="url"
+          id="url"
+          class="form-control"
+          placeholder="https://..."
+        />
+      </div>
+
+      <div class="form-group mb-4">
+        <label class="d-flex align-items-center gap-2" style="cursor: pointer">
           <input
-            type="text"
-            name="title"
-            id="title"
-            required
-            placeholder="e.g., Campus Drive Announcement, Important Notice"
-            class="w-100"
-            style="
-              padding: 0.75rem;
-              border: 1px solid var(--border);
-              border-radius: 8px;
-            "
+            type="checkbox"
+            name="target_all_students"
+            id="target_all_students"
+            checked
           />
-          <small
-            style="
-              color: var(--text-muted);
-              display: block;
-              margin-top: 0.25rem;
-            "
-            >Brief title of the announcement</small
-          >
-        </div>
-
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          "
-        >
-          <div>
-            <label
-              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-              >Category</label
-            >
-            <select
-              name="category"
-              id="category"
-              class="w-100"
-              style="
-                padding: 0.75rem;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-              "
-            >
-              <option value="">Select Category...</option>
-              <option value="Academic">Academic</option>
-              <option value="Placement">Placement</option>
-              <option value="Event">Event</option>
-              <option value="Holiday">Holiday</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label
-              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-              >Priority</label
-            >
-            <select
-              name="priority"
-              id="priority"
-              class="w-100"
-              style="
-                padding: 0.75rem;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-              "
-            >
-              <option value="normal">Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 1rem">
-          <label style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-            >Content *</label
-          >
-          <textarea
-            name="content"
-            id="content"
-            rows="8"
-            required
-            placeholder="Write the announcement content here. Use clear and concise language..."
-            class="w-100"
-            style="
-              padding: 0.75rem;
-              border: 1px solid var(--border);
-              border-radius: 8px;
-              font-family: &quot;Outfit&quot;, sans-serif;
-            "
-          ></textarea>
-          <small
-            style="
-              color: var(--text-muted);
-              display: block;
-              margin-top: 0.25rem;
-            "
-            >Minimum 20 characters required</small
-          >
-        </div>
+          <span>Notify all students</span>
+        </label>
       </div>
 
-      <!-- Section: Important Dates -->
-      <div
-        style="
-          margin-bottom: 1.5rem;
-          padding-bottom: 1.5rem;
-          border-bottom: 1px solid var(--border);
-        "
-      >
-        <h3 style="margin-bottom: 1rem; color: var(--primary)">
-          Visibility & Expiry
-        </h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
-          <div>
-            <label
-              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-              >Publish Date</label
-            >
-            <input
-              type="datetime-local"
-              name="publish_date"
-              id="publish_date"
-              class="w-100"
-              style="
-                padding: 0.75rem;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-              "
-            />
-            <small
-              style="
-                color: var(--text-muted);
-                display: block;
-                margin-top: 0.25rem;
-              "
-              >When to publish (leave blank for immediate)</small
-            >
-          </div>
-          <div>
-            <label
-              style="display: block; margin-bottom: 0.5rem; font-weight: 600"
-              >Expiry Date</label
-            >
-            <input
-              type="datetime-local"
-              name="expiry_date"
-              id="expiry_date"
-              class="w-100"
-              style="
-                padding: 0.75rem;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-              "
-            />
-            <small
-              style="
-                color: var(--text-muted);
-                display: block;
-                margin-top: 0.25rem;
-              "
-              >When announcement will expire</small
-            >
-          </div>
-        </div>
-
-        <div
-          style="
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(99, 102, 241, 0.05);
-            border-radius: 8px;
-          "
-        >
-          <label
-            style="
-              display: flex;
-              gap: 0.5rem;
-              align-items: center;
-              cursor: pointer;
-            "
-          >
-            <input
-              type="checkbox"
-              name="target_all_students"
-              id="target_all_students"
-              checked
-            />
-            <span>Send notification to all students</span>
-          </label>
-          <small
-            style="
-              color: var(--text-muted);
-              display: block;
-              margin-top: 0.25rem;
-            "
-            >When published, all active students will receive a
-            notification</small
-          >
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div
-        style="
-          display: flex;
-          gap: 0.75rem;
-          justify-content: flex-end;
-          flex-wrap: wrap;
-        "
-      >
-        <button
-          type="button"
-          class="btn-secondary"
-          onclick="closeAnnouncementModal()"
-        >
+      <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+        <button type="button" class="btn-secondary" onclick="closeModal()">
           Cancel
         </button>
         <button
-          type="button"
+          type="submit"
           class="btn-secondary"
-          onclick="previewAnnouncementFromForm()"
+          onclick="setAction('draft')"
         >
-          <i class="ph ph-eye"></i> Preview
-        </button>
-        <input type="hidden" name="action" id="ann_action" value="draft" />
-        <button
-          type="submit"
-          class="btn-primary"
-          onclick="setAnnounceAction('draft')"
-        >
-          <i class="ph ph-floppy-disk"></i> Save as Draft
+          Save Draft
         </button>
         <button
           type="submit"
           class="btn-primary"
-          onclick="setAnnounceAction('publish')"
+          onclick="setAction('publish')"
         >
-          <i class="ph ph-arrow-up"></i> Publish Now
+          Publish Now
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Preview Modal -->
-<div
-  id="announcementPreviewModal"
-  style="
+<style>
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .status-tabs-container {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+  }
+
+  .status-tab {
+    background: none;
+    border: none;
+    padding: 0.5rem 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+
+  .status-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .badge-outline {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+
+  .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1800;
-    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    align-items: flex-start; /* Fix for scrolling */
     justify-content: center;
-    overflow-y: auto;
-    padding: 1rem;
-  "
->
-  <div
-    style="
-      background: var(--surface-solid);
-      width: 95%;
-      max-width: 700px;
-      border-radius: 16px;
-      padding: 2rem;
-      margin: auto;
-      margin-top: 2rem;
-      margin-bottom: 2rem;
-    "
-  >
-    <div
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <h2>Announcement Preview</h2>
-      <button
-        onclick="closeAnnouncementPreviewModal()"
-        style="
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 1.5rem;
-        "
-      >
-        ✕
-      </button>
-    </div>
-
-    <div
-      id="announcementPreviewContent"
-      style="margin-bottom: 1.5rem; line-height: 1.6"
-    >
-      <!-- Preview content will be inserted here -->
-    </div>
-
-    <div style="display: flex; gap: 0.75rem; justify-content: flex-end">
-      <button class="btn-secondary" onclick="closeAnnouncementPreviewModal()">
-        Close
-      </button>
-      <button class="btn-primary" onclick="publishAnnouncementFromPreview()">
-        <i class="ph ph-arrow-up"></i> Publish Now
-      </button>
-    </div>
-  </div>
-</div>
-
-<style>
-  .announcement-card {
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-  }
-
-  .announcement-card:hover {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 768px) {
-    #announcementModal > div,
-    #announcementPreviewModal > div {
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-    }
-
-    /* Stack Announcement Card Content */
-    .announcement-card > div {
-        flex-direction: column !important;
-    }
-    
-    .announcement-card > div > div:first-child {
-        width: 100%;
-    }
-
-    .announcement-card > div > div:last-child {
-        width: 100%;
-        flex-direction: row !important; /* Buttons horizontal */
-        justify-content: flex-start;
-        margin-top: 1rem;
-        flex-wrap: wrap;
-        border-top: 1px solid var(--border);
-        padding-top: 1rem;
-    }
-    
-    .announcement-card > div > div:last-child button {
-        flex: 1; /* Equal width buttons */
-        justify-content: center;
-    }
-    
-    .announcement-card > div > div:last-child form {
-        width: 100%;
-        margin-top: 0.5rem;
-    }
+    padding: 2rem 1rem;
+    backdrop-filter: blur(4px);
+    overflow-y: auto; /* Enable scrolling */
   }
 </style>
 
-<script id="announcements-data" type="application/json">
-  {{ announcements | map(attribute='safe_data') | list | tojson | safe }}
-</script>
-
 <script>
-  let currentAnnouncementIndex = -1;
-  const announcements = JSON.parse(document.getElementById('announcements-data').textContent);
+  const data = [
+    {% for ann in announcements %}
+      {{ ann.safe_data | tojson | safe }},
+    {% endfor %}
+  ];
 
-  function setAnnounceAction(action) {
-    document.getElementById('ann_action').value = action;
+  function setAction(status) {
+      document.getElementById('action').value = status;
   }
 
-  function openAnnouncementModal(index = -1) {
-    currentAnnouncementIndex = index;
-    const modal = document.getElementById('announcementModal');
-    const form = document.getElementById('announcementForm');
-    const title = document.getElementById('announcementModalTitle');
+  function openModal(index = -1) {
+    const modal = document.getElementById('annModal');
+    const form = document.getElementById('annForm');
+    const title = document.getElementById('modalTitle');
 
-    if (index >= 0 && announcements[index]) {
+    if (index >= 0 && data[index]) {
+      const item = data[index];
       title.textContent = 'Edit Announcement';
-      const ann = announcements[index];
-      
-      if (!ann._id) {
-        console.error("Announcement ID is missing for index " + index);
-        alert("Error: Cannot edit this announcement. invalid ID.");
-        return;
-      }
-      
-      document.getElementById('announcement_id').value = ann._id;
-      document.getElementById('title').value = ann.title;
-      document.getElementById('category').value = ann.category || '';
-      document.getElementById('priority').value = ann.priority || 'normal';
-      document.getElementById('content').value = ann.content;
-      document.getElementById('publish_date').value = ann.published_at ? formatDatetimeForInput(ann.published_at) : '';
-      document.getElementById('expiry_date').value = ann.expires_at ? formatDatetimeForInput(ann.expires_at) : '';
-      document.getElementById('target_all_students').checked = ann.target_all_students !== false;
-      form.action = `/admin/announcements/${ann._id}/edit`;
+
+      document.getElementById('title').value = item.title;
+      document.getElementById('category').value = item.category || 'General';
+      document.getElementById('priority').value = item.priority || 'normal';
+      document.getElementById('content').value = item.content;
+      document.getElementById('url').value = item.external_url || '';
+      document.getElementById('target_all_students').checked = item.target_all_students !== false;
+
+      form.action = `/admin/announcements/${item._id}/edit`;
     } else {
       title.textContent = 'New Announcement';
       form.reset();
-      document.getElementById('announcement_id').value = '';
-      document.getElementById('target_all_students').checked = true;
-      form.action = '/admin/announcements/add';
+      form.action = "{{ url_for('add_announcement') }}";
     }
+
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Lock Body Scroll
   }
 
-  function closeAnnouncementModal() {
-    document.getElementById('announcementModal').style.display = 'none';
-    document.getElementById('announcementForm').reset();
+  function closeModal() {
+    document.getElementById('annModal').style.display = 'none';
+    document.body.style.overflow = ''; // Unlock Body Scroll
   }
 
-  function formatDatetimeForInput(dateStr) {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    } catch (e) {
-      return '';
-    }
+  function filterItems(status) {
+      document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelectorAll('.item-card-element').forEach(card => {
+          if (status === 'all' || card.dataset.status === status) {
+              card.style.display = 'flex';
+          } else {
+              card.style.display = 'none';
+          }
+      });
   }
 
-  function previewAnnouncementFromForm() {
-    const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
-    const category = document.getElementById('category').value || 'General';
-    const priority = document.getElementById('priority').value;
-
-    if (!title || !content) {
-      alert('Please fill in Title and Content');
-      return;
-    }
-
-    const priorityColor = priority === 'urgent' ? '#dc2626' : priority === 'high' ? '#f97316' : '#6366f1';
-    const html = `
-      <div style="background: var(--background); padding: 1.5rem; border-radius: 8px">
-        <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem">
-          <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #6366f1">${category}</span>
-          <span class="badge" style="background: rgba(${priorityColor}, 0.1); color: ${priorityColor}">${priority.toUpperCase()}</span>
-        </div>
-        <h2 style="margin-bottom: 0.5rem">${title}</h2>
-        <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main)">${content}</p>
-      </div>
-    `;
-
-    document.getElementById('announcementPreviewContent').innerHTML = html;
-    document.getElementById('announcementPreviewModal').style.display = 'flex';
-  }
-
-  function previewAnnouncement(index) {
-    if (index >= 0 && announcements[index]) {
-      const ann = announcements[index];
-      const priorityColor = ann.priority === 'urgent' ? '#dc2626' : ann.priority === 'high' ? '#f97316' : '#6366f1';
-      const html = `
-        <div style="background: var(--background); padding: 1.5rem; border-radius: 8px">
-          <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem">
-            <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #6366f1">${ann.category || 'General'}</span>
-            <span class="badge" style="background: rgba(${priorityColor}, 0.1); color: ${priorityColor}">${(ann.priority || 'normal').toUpperCase()}</span>
-          </div>
-          <h2 style="margin-bottom: 0.5rem">${ann.title}</h2>
-          <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main)">${ann.content}</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted)">
-            By: ${ann.created_by} | Status: ${ann.status}
-          </div>
-        </div>
-      `;
-      document.getElementById('announcementPreviewContent').innerHTML = html;
-      document.getElementById('announcementPreviewModal').style.display = 'flex';
-    }
-  }
-
-  function closeAnnouncementPreviewModal() {
-    document.getElementById('announcementPreviewModal').style.display = 'none';
-  }
-
-  function publishAnnouncementFromPreview() {
-    setAnnounceAction('publish');
-    document.getElementById('announcementForm').submit();
-  }
-
-  function publishAnnouncementAction(announcementId) {
-    if (confirm('Publish this announcement? Notifications will be sent to all students.')) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/admin/announcements/${announcementId}/publish`;
-      document.body.appendChild(form);
-      form.submit();
-    }
-  }
-
-  function handleAnnouncementFormSubmit(event) {
-    event.preventDefault();
-    document.getElementById('announcementForm').submit();
-  }
-
-  function filterAnnouncements(event, status) {
-    document.querySelectorAll('.status-tab').forEach(tab => {
-      tab.style.borderBottomColor = 'transparent';
-      tab.style.color = 'var(--text-muted)';
-    });
-    event.currentTarget.style.borderBottomColor = 'var(--primary)';
-    event.currentTarget.style.color = 'var(--primary)';
-
-    document.querySelectorAll('.announcement-item').forEach(card => {
-      const cardStatus = card.getAttribute('data-status');
-      if (status === 'all' || cardStatus === status) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  window.onclick = function(event) {
-    const announcementModal = document.getElementById('announcementModal');
-    const previewModal = document.getElementById('announcementPreviewModal');
-    if (event.target === announcementModal) closeAnnouncementModal();
-    if (event.target === previewModal) closeAnnouncementPreviewModal();
-  };
+  // Close modal on outside click
+  document.getElementById('annModal').addEventListener('click', (e) => {
+      if(e.target === e.currentTarget) closeModal();
+  });
 </script>
-
 {% endblock %}

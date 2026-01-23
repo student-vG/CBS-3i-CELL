@@ -1,0 +1,234 @@
+{% extends 'base.html' %} 
+{% block title %}Student Details - {{ student.name }} | CBS 3i-cell{% endblock %} 
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <!-- Header / Navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('manage_users') }}" class="btn-icon" style="background: var(--surface); border: 1px solid var(--border);">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+        <div>
+            <h2 style="margin: 0; color: var(--primary);">{{ student.name }}</h2>
+            <div style="color: var(--text-muted); font-size: 0.9rem;">
+                Student ID: {{ student.student_id or 'N/A' }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-flex gap-2">
+        {% if student.is_active %}
+        <span class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">Active</span>
+        {% else %}
+        <span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">Inactive/Pending</span>
+        {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Left Column: Personal Info -->
+    <div class="col-md-4 mb-4">
+        <div class="glass-card h-100">
+            <div class="text-center mb-4 pb-3 border-bottom" style="border-color: var(--border) !important;">
+                <div class="avatar-placeholder mx-auto mb-3" style="width: 100px; height: 100px; font-size: 3rem;">
+                    {{ student.name[0] | upper }}
+                </div>
+                <h3 style="font-size: 1.2rem;">{{ student.name }}</h3>
+                <p class="text-muted">{{ user.email }}</p>
+                <div class="mt-3">
+                    <a href="mailto:{{ user.email }}" class="btn-sm btn-secondary w-100 mb-2">
+                        <i class="ph-bold ph-envelope"></i> Send Email
+                    </a>
+                    <a href="{{ url_for('view_student_resume', user_id=user._id) }}" target="_blank" class="btn-sm btn-primary w-100">
+                        <i class="ph-bold ph-file-pdf"></i> View Resume
+                    </a>
+                </div>
+            </div>
+
+            <div class="info-list">
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Phone</label>
+                    <div class="fw-bold">{{ student.phone or 'N/A' }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Alt Phone</label>
+                    <div>{{ student.alt_phone or '-' }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Gender</label>
+                    <div>{{ student.gender or 'N/A' }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Date of Birth</label>
+                    <div>{{ student.dob or 'N/A' }}</div>
+                </div>
+                 <div class="mb-3">
+                    <label class="text-muted small d-block">Nationality</label>
+                    <div>{{ student.nationality or 'N/A' }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small d-block">Marital Status</label>
+                    <div>{{ student.marital_status or 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Extended Details -->
+    <div class="col-md-8">
+        <!-- IDs & Address -->
+        <div class="glass-card mb-4">
+            <h4 class="mb-3" style="color: var(--primary);">Identity & Address</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small d-block">Aadhaar Number</label>
+                    <div class="fw-bold">{{ student.aadhaar or 'N/A' }}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small d-block">PAN Number</label>
+                    <div class="fw-bold">{{ student.pan or 'N/A' }}</div>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="text-muted small d-block">Current Address</label>
+                    <div>{{ student.address.current if student.address else 'N/A' }}</div>
+                </div>
+                <div class="col-12">
+                    <label class="text-muted small d-block">Permanent Address</label>
+                    <div>{{ student.address.permanent if student.address else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Details -->
+        <div class="glass-card mb-4">
+            <h4 class="mb-3" style="color: var(--primary);">Academic History</h4>
+            
+            <!-- Tabs or Stacked View -->
+             {% if student.academic %}
+            <div class="academic-stack d-flex flex-column gap-3">
+                
+                <!-- PG -->
+                <div class="p-3 rounded" style="background: var(--surface-heavy); border: 1px solid var(--border);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong style="color: var(--accent);">Post Graduation (PG)</strong>
+                        <span class="badge">{{ student.academic.pg.year if student.academic.pg else '-' }}</span>
+                    </div>
+                    {% if student.academic.pg %}
+                    <div class="row small">
+                        <div class="col-6 mb-1"><span class="text-muted">Degree:</span> {{ student.academic.pg.degree }}</div>
+                        <div class="col-6 mb-1"><span class="text-muted">Branch:</span> {{ student.academic.pg.branch }}</div>
+                        <div class="col-6 mb-1"><span class="text-muted">University:</span> {{ student.academic.pg.university }}</div>
+                        <div class="col-6 mb-1"><span class="text-muted">Score:</span> <strong>{{ student.academic.pg.score }}%</strong></div>
+                        <div class="col-6"><span class="text-muted">Backlogs:</span> {{ student.academic.pg.backlogs }}</div>
+                    </div>
+                    {% else %}
+                    <span class="text-muted small">Not Applicable</span>
+                    {% endif %}
+                </div>
+
+                <!-- UG -->
+                <div class="p-3 rounded" style="background: var(--surface-heavy); border: 1px solid var(--border);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong style="color: var(--secondary);">Under Graduation (UG)</strong>
+                         <span class="badge">{{ student.academic.ug.year if student.academic.ug else '-' }}</span>
+                    </div>
+                     {% if student.academic.ug %}
+                    <div class="row small">
+                        <div class="col-6 mb-1"><span class="text-muted">Degree:</span> {{ student.academic.ug.degree }}</div>
+                        <div class="col-6 mb-1"><span class="text-muted">Branch:</span> {{ student.academic.ug.branch }}</div>
+                        <div class="col-6 mb-1"><span class="text-muted">College:</span> {{ student.academic.ug.college }}</div>
+                         <div class="col-6 mb-1"><span class="text-muted">Score:</span> <strong>{{ student.academic.ug.score }}%</strong></div>
+                       <div class="col-6"><span class="text-muted">Backlogs:</span> {{ student.academic.ug.backlogs }}</div>
+                    </div>
+                     {% else %}
+                    <span class="text-muted small">Not Applicable</span>
+                    {% endif %}
+                </div>
+
+                <!-- 12th -->
+                <div class="p-3 rounded" style="background: var(--surface-heavy); border: 1px solid var(--border-strong);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Class XII / Diploma</strong>
+                         <span class="badge">{{ student.academic.twelfth.year if student.academic.twelfth else '-' }}</span>
+                    </div>
+                     {% if student.academic.twelfth %}
+                    <div class="row small">
+                        <div class="col-8 mb-1"><span class="text-muted">School/College:</span> {{ student.academic.twelfth.school }}</div>
+                        <div class="col-4 mb-1"><span class="text-muted">Board:</span> {{ student.academic.twelfth.board }}</div>
+                        <div class="col-6"><span class="text-muted">Score:</span> <strong>{{ student.academic.twelfth.score }}%</strong></div>
+                        <div class="col-6"><span class="text-muted">Stream:</span> {{ student.academic.twelfth.stream }}</div>
+                    </div>
+                     {% else %}
+                    <span class="text-muted small">Not Applicable</span>
+                    {% endif %}
+                </div>
+
+                <!-- 10th -->
+                <div class="p-3 rounded" style="background: var(--surface-heavy); border: 1px solid var(--border-strong);">
+                     <div class="d-flex justify-content-between mb-2">
+                        <strong>Class X</strong>
+                        <span class="badge">{{ student.academic.tenth.year if student.academic.tenth else '-' }}</span>
+                    </div>
+                     {% if student.academic.tenth %}
+                    <div class="row small">
+                        <div class="col-8 mb-1"><span class="text-muted">School:</span> {{ student.academic.tenth.school }}</div>
+                        <div class="col-4 mb-1"><span class="text-muted">Board:</span> {{ student.academic.tenth.board }}</div>
+                         <div class="col-12"><span class="text-muted">Score:</span> <strong>{{ student.academic.tenth.score }}%</strong></div>
+                    </div>
+                     {% else %}
+                    <span class="text-muted small">Not Applicable</span>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3">Academic details not produced yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Skills & Projects -->
+        <div class="glass-card">
+            <h4 class="mb-3" style="color: var(--primary);">Professional Profile</h4>
+            
+            <div class="mb-4">
+                <label class="form-label text-muted">Technical Skills</label>
+                <div class="p-3 rounded" style="background: var(--surface-input);">
+                    {{ student.skills or 'No skills listed.' }}
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label text-muted">Projects & Certifications</label>
+                 <div class="p-3 rounded" style="background: var(--surface-input); white-space: pre-wrap;">{{ student.projects or 'No projects listed.' }}</div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.avatar-placeholder {
+    width: 100px; height: 100px;
+    background: var(--gradient);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+    box-shadow: 0 10px 20px rgba(99,99,245,0.3);
+}
+.btn-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
+.btn-icon:hover {
+    background: var(--surface-heavy);
+    color: var(--primary);
+    transform: translateX(-3px);
+}
+</style>
+{% endblock %}

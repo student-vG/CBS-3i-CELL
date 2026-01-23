@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--primary);">Form Responses</h2>
+        <p class="text-muted">{{ form.title }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('dynamic_forms.manage_forms') }}" class="btn-secondary">
+            <i class="ph-bold ph-arrow-left"></i> Back
+        </a>
+        <a href="{{ url_for('dynamic_forms.export_form_responses', form_id=form._id) }}" class="btn-primary">
+            <i class="ph-bold ph-download-simple"></i> Export All (CSV)
+        </a>
+    </div>
+  </div><br>
+
+  <div class="glass-card p-0" style="overflow: hidden;">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Submitted At</th>
+            <th>Preview</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for resp in responses %}
+          <tr>
+            <td>
+              <strong>{{ resp.student_name }}</strong>
+            </td>
+            <td>{{ resp.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                <!-- Preview first 3 answers as summary -->
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                {% for key, val in resp.answers.items() %}
+                    {% if loop.index <= 3 %}
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        <span style="font-weight: 600; color: var(--text);">{{ key }}:</span> {{ val|string|truncate(40) }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </td>
+            <td>
+               <button onclick="openResponseModal('{{ resp._id }}')" class="btn-sm btn-secondary" title="View Full Response">
+                   <i class="ph-bold ph-eye"></i> View
+               </button>
+               <!-- Hidden data div to easily grab content without AJAX -->
+               <div id="resp-data-{{ resp._id }}" style="display:none;">
+                   <h3 class="mb-3">{{ resp.student_name }}</h3>
+                   <p class="text-muted small mb-3">Submitted: {{ resp.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                   <div class="response-list">
+                       {% for key, val in resp.answers.items() %}
+                       <div class="mb-3">
+                           <strong style="display:block; color:var(--primary);">{{ key }}</strong>
+                           <div style="background:var(--surface); padding:0.5rem; border-radius:4px; margin-top:0.25rem;">
+                               {{ val }}
+                           </div>
+
+                       </div>
+                       {% endfor %}
+                   </div>
+               </div>
+            </td>
+          </tr>
+
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-center py-4">No responses yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Response Details Modal -->
+<div id="responseModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--surface-solid); width: 90%; max-width: 600px; max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg);">
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Response Details</h3>
+            <button onclick="closeResponseModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+        </div>
+        
+        <div id="modalContent" style="padding: 1.5rem; overflow-y: auto;">
+            <!-- Content injected via JS -->
+        </div>
+        
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border); text-align: right;">
+            <button onclick="closeResponseModal()" class="btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openResponseModal(respId) {
+    const dataDiv = document.getElementById('resp-data-' + respId);
+    if(dataDiv) {
+        document.getElementById('modalContent').innerHTML = dataDiv.innerHTML;
+        document.getElementById('responseModal').style.display = 'flex';
+    }
+}
+
+function closeResponseModal() {
+    document.getElementById('responseModal').style.display = 'none';
+}
+
+// Close on outside click
+window.onclick = function(event) {
+    const modal = document.getElementById('responseModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+{% endblock %}

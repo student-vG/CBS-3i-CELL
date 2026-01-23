@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 style="color: var(--primary);">Manage Custom Forms</h2><br>
+    <div style="display: flex; gap: 1rem;">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
+        <i class="ph-bold ph-arrow-left"></i> Back
+      </a>
+      <a href="{{ url_for('dynamic_forms.create_form') }}" class="btn-primary">
+        <i class="ph-bold ph-plus"></i> Create Form
+      </a>
+    </div>
+  </div>
+  <br>
+
+  <div class="glass-card p-0" style="overflow: hidden;">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Created At</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in forms %}
+          <tr>
+            <td>
+              <strong>{{ form.title }}</strong>
+            </td>
+            <td>{{ form.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+              {% if form.is_active %}
+              <span class="status-badge selected">Active</span>
+              {% else %}
+              <span class="status-badge rejected">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <a href="{{ url_for('dynamic_forms.view_form_responses', form_id=form._id) }}" class="btn-sm btn-primary" title="View Responses">
+                    <i class="ph-bold ph-list-dashes"></i> Responses
+                </a>
+
+                <form action="{{ url_for('dynamic_forms.toggle_form', form_id=form._id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn-sm btn-secondary" title="{{ 'Deactivate' if form.is_active else 'Activate' }}">
+                        {% if form.is_active %}
+                        <i class="ph-bold ph-stop"></i>
+                        {% else %}
+                        <i class="ph-bold ph-play"></i>
+                        {% endif %}
+                    </button>
+                </form>
+                
+                <a href="{{ url_for('dynamic_forms.edit_form', form_id=form._id) }}" class="btn-sm btn-secondary" title="Edit Form">
+                    <i class="ph-bold ph-pencil"></i>
+                </a>
+
+                <button onclick="confirmDeleteForm('{{ form._id }}', '{{ form.title }}')" class="btn-sm btn-secondary" style="color: var(--accent); border-color: var(--accent);" title="Delete Form">
+                    <i class="ph-bold ph-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-center py-4">No forms created yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDeleteForm(formId, formTitle) {
+    if(confirm(`Are you sure you want to delete the form "${formTitle}"? This action cannot be undone and will delete all associated responses.`)) {
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/forms/delete/${formId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

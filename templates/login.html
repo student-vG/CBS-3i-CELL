@@ -1,8 +1,5 @@
-{% extends 'base.html' %} 
-
-{% block title %}Login - Chetan Business School{% endblock %} 
-
-{% block content %}
+{% extends 'base.html' %} {% block title %}Login - CBS 3i-cell{%
+endblock %} {% block content %}
 <div class="auth-page-wrapper">
   <!-- Dynamic Background -->
   <div class="background-decor-wrapper">
@@ -22,44 +19,83 @@
     </div>
 
     <!-- Login Form -->
-    <form action="{{ url_for('login_post') }}" method="POST" class="auth-form-stack">
-      
+    <form
+      action="{{ url_for('login_post') }}"
+      method="POST"
+      class="auth-form-stack"
+    >
       <!-- Role Selection Card -->
       <div class="input-group-card">
-  <label class="input-label">I am a</label>
-  <input type="hidden" name="role" id="role-input" value="student" />
-  <div class="role-selection" style="display:flex; gap:1rem;">
-    <div class="role-card" data-role="student" style="flex:1; padding:1rem; text-align:center; background:var(--surface-input); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer;">
-      <i class="ph ph-user" style="font-size:2rem; color:var(--primary);"></i><br/>Student
-    </div>
-    <div class="role-card" data-role="admin" style="flex:1; padding:1rem; text-align:center; background:var(--surface-input); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer;">
-      <i class="ph ph-users" style="font-size:2rem; color:var(--primary);"></i><br/>Admin / Faculty
-    </div>
-  </div>
-</div>
-<script>
-  const roleInput = document.getElementById('role-input');
-  document.querySelectorAll('.role-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.role-card').forEach(c => c.style.borderColor = 'var(--border)');
-      card.style.borderColor = 'var(--primary)';
-      roleInput.value = card.dataset.role;
-    });
-  });
-  // default highlight
-  document.querySelector('.role-card[data-role="student"]').style.borderColor = 'var(--primary)';
-</script>
+        <label class="input-label">I am a</label>
+        <input type="hidden" name="role" id="role-input" value="student" />
+        <div class="role-selection" style="display: flex; gap: 1rem">
+          <div
+            class="role-card"
+            data-role="student"
+            style="
+              flex: 1;
+              padding: 1rem;
+              text-align: center;
+              background: var(--surface-input);
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              cursor: pointer;
+            "
+          >
+            <i
+              class="ph ph-user"
+              style="font-size: 2rem; color: var(--primary)"
+            ></i
+            ><br />Student
+          </div>
+          <div
+            class="role-card"
+            data-role="admin"
+            style="
+              flex: 1;
+              padding: 1rem;
+              text-align: center;
+              background: var(--surface-input);
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              cursor: pointer;
+            "
+          >
+            <i
+              class="ph ph-users"
+              style="font-size: 2rem; color: var(--primary)"
+            ></i
+            ><br />Admin / Faculty
+          </div>
+        </div>
+      </div>
+      <script>
+        const roleInput = document.getElementById("role-input");
+        document.querySelectorAll(".role-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            document
+              .querySelectorAll(".role-card")
+              .forEach((c) => (c.style.borderColor = "var(--border)"));
+            card.style.borderColor = "var(--primary)";
+            roleInput.value = card.dataset.role;
+          });
+        });
+        // default highlight
+        document.querySelector(
+          '.role-card[data-role="student"]',
+        ).style.borderColor = "var(--primary)";
+      </script>
 
       <!-- Email Input -->
       <div class="input-group-card">
         <label for="email" class="input-label">Email Address</label>
         <div class="custom-input-wrapper">
           <i class="ph ph-envelope input-icon"></i>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            required 
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
             placeholder="name@example.com"
             class="custom-input-field"
           />
@@ -71,11 +107,11 @@
         <label for="password" class="input-label">Password</label>
         <div class="custom-input-wrapper">
           <i class="ph ph-lock-key input-icon"></i>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            required 
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
             placeholder="Enter your password"
             class="custom-input-field"
           />
@@ -96,7 +132,10 @@
 
     <!-- Footer -->
     <div class="auth-footer-section">
-      <p>Don't have an account? <a href="{{ url_for('signup') }}">Create Account</a></p>
+      <p>
+        Don't have an account?
+        <a href="{{ url_for('signup') }}">Create Account</a>
+      </p>
     </div>
   </div>
 </div>
@@ -136,14 +175,43 @@
     animation: float 12s ease-in-out infinite;
   }
 
-  .circle-1 { top: -10%; left: -10%; width: 40vh; height: 40vh; background: #818cf8; animation-delay: 0s; }
-  .circle-2 { bottom: -10%; right: -10%; width: 50vh; height: 50vh; background: #f43f5e; animation-delay: -4s; }
-  .circle-3 { top: 40%; left: 30%; width: 30vh; height: 30vh; background: #06b6d4; animation-delay: -8s; opacity: 0.3; }
+  .circle-1 {
+    top: -10%;
+    left: -10%;
+    width: 40vh;
+    height: 40vh;
+    background: #818cf8;
+    animation-delay: 0s;
+  }
+  .circle-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 50vh;
+    height: 50vh;
+    background: #f43f5e;
+    animation-delay: -4s;
+  }
+  .circle-3 {
+    top: 40%;
+    left: 30%;
+    width: 30vh;
+    height: 30vh;
+    background: #06b6d4;
+    animation-delay: -8s;
+    opacity: 0.3;
+  }
 
   @keyframes float {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.95); }
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.95);
+    }
   }
 
   /* --- Card Design --- */
@@ -156,7 +224,7 @@
     -webkit-backdrop-filter: blur(24px);
     border-radius: 32px; /* Softer, more modern radius */
     padding: 2.5rem;
-    box-shadow: 
+    box-shadow:
       var(--shadow-lg),
       inset 0 0 0 1px var(--border);
     border: 1px solid var(--border);
@@ -215,7 +283,8 @@
     margin-left: 0.25rem;
   }
 
-  .custom-input-wrapper, .custom-select-wrapper {
+  .custom-input-wrapper,
+  .custom-select-wrapper {
     position: relative;
     border-radius: 16px;
     background: var(--surface-input);
@@ -224,7 +293,8 @@
     border: 1px solid var(--border);
   }
 
-  .custom-input-wrapper:focus-within, .custom-select-wrapper:focus-within {
+  .custom-input-wrapper:focus-within,
+  .custom-select-wrapper:focus-within {
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     border-color: var(--primary);
     transform: translateY(-1px);
@@ -321,7 +391,7 @@
   .btn-icon-circle {
     width: 42px;
     height: 42px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -333,7 +403,7 @@
   .auth-footer-section {
     text-align: center;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .auth-footer-section p {

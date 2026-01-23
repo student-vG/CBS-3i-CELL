@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="auth-container lg glass-card" style="margin-top: 2rem;">
+    <div style="margin-bottom: 1.5rem;">
+      <a href="{{ url_for('dynamic_forms.list_student_forms') }}" class="btn-secondary btn-sm">
+        <i class="ph-bold ph-arrow-left"></i> Back
+      </a>
+    </div>
+    <h2 class="text-center mb-2">{{ form.title }}</h2>
+    <p class="text-center text-muted mb-4">{{ form.description }}</p>
+    
+    <form action="{{ url_for('dynamic_forms.fill_form', form_id=form._id) }}" method="POST" enctype="multipart/form-data">
+      {% for field in form.fields %}
+      <div class="form-group mb-4">
+        <label class="form-label">{{ field.label }}</label>
+        
+        {% if field.type == 'textarea' %}
+          <textarea name="{{ field.label }}" class="form-control" rows="4" required></textarea>
+        {% elif field.type == 'file' %}
+          <input type="file" name="{{ field.label }}" class="form-control" required>
+          <small class="text-muted">Max size: 5MB</small>
+        {% elif field.type == 'date' %}
+           <input type="date" name="{{ field.label }}" class="form-control" required>
+        {% elif field.type == 'number' %}
+           <input type="number" name="{{ field.label }}" class="form-control" required>
+        {% else %}
+           <input type="text" name="{{ field.label }}" class="form-control" required>
+        {% endif %}
+      </div>
+      {% endfor %}
+      
+      <div class="d-flex gap-3 justify-content-center mt-4">
+        <a href="{{ url_for('dynamic_forms.list_student_forms') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary px-5">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

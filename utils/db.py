@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import gridfs
 import os
 
 # Default to localhost if not specified
@@ -9,4 +10,8 @@ def get_db():
     client = MongoClient(MONGO_URI)
     db = client[DB_NAME]
     return db
+
+def get_fs():
+    db = get_db()
+    return gridfs.GridFS(db)
 

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="glass-card" style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+    <h2 class="mb-4" style="color: var(--primary);">Edit Form</h2>
+    
+    <form action="{{ url_for('dynamic_forms.edit_form', form_id=form._id) }}" method="POST" id="editForm">
+      <div class="form-group mb-4">
+        <label class="form-label">Form Title</label>
+        <input type="text" name="title" class="form-control" required value="{{ form.title }}">
+      </div>
+      
+      <div class="form-group mb-4">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="3">{{ form.description }}</textarea>
+      </div>
+      
+      <hr style="border-color: var(--border); margin: 2rem 0;">
+      
+      <h4 class="mb-3">Form Fields</h4>
+      <div id="fieldsContainer">
+        <!-- Dynamic fields will appear here -->
+      </div>
+      
+      <button type="button" class="btn-secondary w-100 mb-4" onclick="addField()">
+        <i class="ph-bold ph-plus"></i> Add Field
+      </button>
+
+      <!-- Hidden input to store JSON structure -->
+      <input type="hidden" name="fields_data" id="fieldsData" value='{{ form.fields | tojson | safe }}'>
+      
+      <div class="d-flex gap-3">
+          <a href="{{ url_for('dynamic_forms.manage_forms') }}" class="btn-secondary w-100">Cancel</a>
+          <button type="submit" class="btn-primary w-100">Update Form</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="fieldTemplate">
+  <div class="field-item glass-card-heavy p-3 mb-3" style="border-left: 4px solid var(--primary);">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="m-0">Field <span class="field-index"></span></h5>
+      <button type="button" class="btn-sm btn-danger remove-btn" style="background:none; border:none; color: var(--accent);">
+        <i class="ph-bold ph-trash"></i>
+      </button>
+    </div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Label</label>
+        <input type="text" class="form-control field-label" required placeholder="Question/Label">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-control field-type">
+          <option value="text">Text Input</option>
+          <option value="textarea">Long Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+          <option value="file">File Upload</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+let fieldCount = 0;
+
+function addField(data = null) {
+  fieldCount++;
+  const container = document.getElementById('fieldsContainer');
+  const template = document.getElementById('fieldTemplate');
+  const clone = template.content.cloneNode(true);
+  
+  clone.querySelector('.field-index').textContent = fieldCount;
+  clone.querySelector('.remove-btn').onclick = function(e) {
+    e.target.closest('.field-item').remove();
+    updateJson();
+  };
+  
+  const labelInput = clone.querySelector('.field-label');
+  const typeSelect = clone.querySelector('.field-type');
+  
+  if (data) {
+      labelInput.value = data.label;
+      typeSelect.value = data.type;
+  }
+  
+  // Attach listeners to update JSON on change
+  labelInput.addEventListener('input', updateJson);
+  typeSelect.addEventListener('change', updateJson);
+  
+  container.appendChild(clone);
+}
+
+function updateJson() {
+  const fields = [];
+  document.querySelectorAll('.field-item').forEach(item => {
+    fields.push({
+      label: item.querySelector('.field-label').value,
+      type: item.querySelector('.field-type').value
+    });
+  });
+  document.getElementById('fieldsData').value = JSON.stringify(fields);
+}
+
+document.getElementById('editForm').onsubmit = function() {
+  updateJson(); // Ensure latest data
+  if (document.getElementById('fieldsData').value === '[]') {
+    alert("Please add at least one field.");
+    return false;
+  }
+  return true;
+};
+
+// Initialize Existing Fields
+document.addEventListener('DOMContentLoaded', () => {
+    const rawData = document.getElementById('fieldsData').value;
+    try {
+        const fields = JSON.parse(rawData);
+        fields.forEach(field => addField(field));
+    } catch(e) {
+        console.error("Error parsing initial fields", e);
+    }
+});
+</script>
+{% endblock %}

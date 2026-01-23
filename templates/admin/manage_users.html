@@ -71,6 +71,9 @@ block content %}
                   ✓ Approve
                 </button>
               </form>
+              <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-secondary" style="padding: 0.5rem; margin-right: 0.5rem;" title="View Details">
+                  <i class="ph-bold ph-eye"></i>
+              </a>
               <form
                 method="POST"
                 action="{{ url_for('reject_student', user_id=user._id) }}"
@@ -111,6 +114,7 @@ block content %}
             <th style="padding: 0.75rem; text-align: left">Registered</th>
             <th style="padding: 0.75rem; text-align: left">Last Login</th>
             <th style="padding: 0.75rem; text-align: left">Status</th>
+            <th style="padding: 0.75rem; text-align: center">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -148,6 +152,11 @@ block content %}
                 "
                 >Active</span
               >
+            </td>
+            <td style="padding: 0.75rem; text-align: center;">
+                 <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-secondary" title="View Details">
+                  <i class="ph-bold ph-eye"></i> View
+              </a>
             </td>
           </tr>
           {% endfor %}

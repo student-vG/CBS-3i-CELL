@@ -1,84 +1,152 @@
-{% extends 'base.html' %}
-
-{% block title %}Manage Applications - Chetan Business School{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% block title %}Manage Applications - Chetan Business
+School{% endblock %} {% block content %}
 <div class="section-card glass-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h2><i class="ph-bold ph-files" style="color: var(--primary); margin-right: 0.5rem;"></i>Student Applications
-        </h2>
-        <div style="display: flex; gap: 1rem;">
-            <a href="{{ url_for('export_applications') }}" class="btn-secondary"
-                style="background: #ffffff; color: white; border: none;">
-                <i class="ph-bold ph-file-csv"></i> Export CSV
-            </a>
-            <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">Back to Dashboard</a>
-        </div>
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    "
+  >
+    <h2>
+      <i
+        class="ph-bold ph-files"
+        style="color: var(--primary); margin-right: 0.5rem"
+      ></i
+      >Student Applications
+    </h2>
+    <div style="display: flex; gap: 1rem">
+      <a
+        href="{{ url_for('export_applications') }}"
+        class="btn-secondary"
+        
+      >
+        <i class="ph-bold ph-file-csv"></i> Export CSV
+      </a>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"
+        >Back to Dashboard</a
+      >
     </div>
+  </div>
 
-    <div class="data-table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Student Details</th>
-                    <th>Academic Info</th>
-                    <th>Job Opportunity</th>
-                    <th>Resume</th>
-                    <th>Applied Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for app in applications %}
-                <tr>
-                    <td>
-                        <div style="font-weight: 600;">{{ app.student_info.name }}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ app.student_info.user_id.email }}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="badge" style="display: inline-block; margin-bottom: 0.25rem;">{{
-                            app.student_info.branch }}</div>
-                        <div style="font-size: 0.9rem;">{{ app.student_info.cgpa }} CGPA</div>
-                    </td>
-                    <td>
-                        <div style="font-weight: 600;">{{ app.job_info.company_name }}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ app.job_info.role }}</div>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('static', filename='uploads/' + app.student_info.resume_path) }}"
-                            target="_blank" class="btn-secondary btn-sm" style="padding: 0.3rem 0.6rem;">
-                            <i class="ph ph-file-pdf"></i> View
-                        </a>
-                    </td>
-                    <td>{{ app.applied_at.strftime('%d %b %Y') }}</td>
-                    <td>
-                        <span class="status-badge {{ app.status.lower() }}">{{ app.status }}</span>
-                    </td>
-                    <td>
-                        <form action="{{ url_for('update_application_status', app_id=app._id) }}" method="POST"
-                            style="display: flex; gap: 0.5rem; align-items: center;">
-                            <select name="status" class="form-control"
-                                style="padding: 0.25rem; font-size: 0.85rem; min-width: 100px;">
-                                <option value="Applied" {% if app.status=='Applied' %}selected{% endif %}>Applied
-                                </option>
-                                <option value="Shortlisted" {% if app.status=='Shortlisted' %}selected{% endif %}>
-                                    Shortlisted</option>
-                                <option value="Selected" {% if app.status=='Selected' %}selected{% endif %}>Selected
-                                </option>
-                                <option value="Rejected" {% if app.status=='Rejected' %}selected{% endif %}>Rejected
-                                </option>
-                            </select>
-                            <button type="submit" class="btn-primary btn-sm" style="padding: 0.25rem 0.5rem;">
-                                <i class="ph-bold ph-check"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="data-table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Student Details</th>
+          <th>Academic Info</th>
+          <th>Job Opportunity</th>
+          <th>Resume</th>
+          <th>Applied Date</th>
+          <th>Status</th>
+          <th>Student Response</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in applications %}
+        <tr>
+          <td>
+            <div style="font-weight: 600">{{ app.student_info.name }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted)">
+              {{ app.student_info.user_id.email }}
+            </div>
+          </td>
+          <td>
+            <div
+              class="badge"
+              style="display: inline-block; margin-bottom: 0.25rem"
+            >
+              {{ app.student_info.branch }}
+            </div>
+            <div style="font-size: 0.9rem">
+              {{ app.student_info.cgpa }} CGPA
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600">{{ app.job_info.company_name }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted)">
+              {{ app.job_info.role }}
+            </div>
+          </td>
+          <td>
+            {% if app.student_info.resume_file_id %}
+            <a
+              href="{{ url_for('file_serving.serve_file', file_id=app.student_info.resume_file_id) }}"
+              class="btn-secondary btn-sm"
+              style="padding: 0.3rem 0.6rem"
+            >
+              <i class="ph ph-file-pdf"></i> View
+            </a>
+            {% else %}
+            <span class="text-muted">N/A</span>
+            {% endif %}
+          </td>
+          <td>{{ app.applied_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <span class="status-badge {{ app.status.lower() }}">
+              {% if app.status == 'GD' %}Group Discussion{% else %}{{ app.status
+              }}{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if app.student_response %} {% if app.student_response ==
+            'Attending' %}
+            <span style="color: #166534; font-weight: 600; font-size: 0.85rem">
+              <i class="ph-bold ph-check"></i> Attending
+            </span>
+            {% else %}
+            <span style="color: #991b1b; font-weight: 600; font-size: 0.85rem">
+              <i class="ph-bold ph-x"></i> Not Attending
+            </span>
+            {% endif %} {% else %}
+            <span style="color: var(--text-muted); font-size: 0.85rem">-</span>
+            {% endif %}
+          </td>
+          <td>
+            <form
+              action="{{ url_for('update_application_status', app_id=app._id) }}"
+              method="POST"
+              style="display: flex; gap: 0.5rem; align-items: center"
+            >
+              <select
+                name="status"
+                class="form-control"
+                style="padding: 0.25rem; font-size: 0.85rem; min-width: 120px"
+              >
+                <option value="Applied" {% if app.status == 'Applied' %}selected{% endif %}>
+                  Applied
+                </option>
+                <option value="Shortlisted" {% if app.status == 'Shortlisted' %}selected{% endif %}>
+                  Shortlisted
+                </option>
+                <option value="GD" {% if app.status == 'GD' %}selected{% endif %}>
+                  Group Discussion
+                </option>
+                <option value="Interview" {% if app.status == 'Interview' %}selected{% endif %}>
+                  Interview
+                </option>
+                <option value="Selected" {% if app.status == 'Selected' %}selected{% endif %}>
+                  Selected
+                </option>
+                <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>
+                  Rejected
+                </option>
+              </select>
+              <button
+                type="submit"
+                class="btn-primary btn-sm"
+                style="padding: 0.25rem 0.5rem"
+              >
+                <i class="ph-bold ph-check"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
