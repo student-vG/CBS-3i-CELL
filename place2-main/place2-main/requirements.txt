@@ -1,4 +1,0 @@
-Flask
-pymongo
-Werkzeug
-python-dotenv
