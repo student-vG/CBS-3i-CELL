@@ -89,11 +89,10 @@ def list_student_forms():
         return redirect(url_for('login'))
         
     db = get_db()
-    # List active forms
-    forms = list(db.forms.find({'is_active': True}).sort('created_at', -1))
+    # List all forms (active and inactive)
+    forms = list(db.forms.find().sort('created_at', -1))
     
     # Check which ones the student has already submitted
-    # Optimization: Get all response form_ids for this student
     submitted_ids = [
         resp['form_id'] for resp in db.form_responses.find(
             {'student_id': session.get('user_id')}, 
@@ -101,7 +100,12 @@ def list_student_forms():
         )
     ]
     
-    return render_template('student/forms_list.html', forms=forms, submitted_ids=submitted_ids)
+    # Get student's submitted form responses for display
+    my_responses = list(db.form_responses.find(
+        {'student_id': session.get('user_id')}
+    ).sort('submitted_at', -1))
+    
+    return render_template('student/forms_list.html', forms=forms, submitted_ids=submitted_ids, my_responses=my_responses)
 
 @dynamic_forms_bp.route('/student/forms/<form_id>', methods=['GET', 'POST'])
 def fill_form(form_id):

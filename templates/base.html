@@ -28,7 +28,7 @@
     />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
+      href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 10000) | random }}"
     />
     <link
       rel="stylesheet"
@@ -64,19 +64,19 @@
     {% if request.endpoint in ['login', 'signup', 'login_post', 'signup_post',
     'forgot_password', 'reset_password'] %}
     <!-- Simplified Navbar for Auth Pages -->
-    <nav class="navbar glass-navbar" style="justify-content: space-between">
-      <a href="/" class="logo" style="text-decoration: none">
+    <nav class="navbar glass-navbar auth-navbar">
+      <a href="/" class="logo">
         <img
           src="{{ url_for('static', filename='images/logo1.png') }}"
           alt="Logo"
+          class="logo-img-lg"
         />
-        <div style="display: flex; flex-direction: column; line-height: 1.2;">
-          <span>CBS <span class="highlight">3i-cell</span></span>
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px;">INDUSTRY INSTITUTE INTERFACE</span>
-        </div>
+        <span class="logo-text-simple">
+          Placement<span class="highlight">Cell</span>
+        </span>
       </a>
       <button
-        class="theme-toggle-btn"
+        class="theme-toggle-btn absolute-right"
         onclick="toggleTheme()"
         aria-label="Toggle Dark Mode"
       >
@@ -86,72 +86,118 @@
     {% else %}
     <!-- Full Navbar -->
     <nav class="navbar glass-navbar">
-      <a href="/" class="logo" style="text-decoration: none">
-        <img
-          src="{{ url_for('static', filename='images/logo1.png') }}"
-          alt="Logo"
-        />
-        <div class="logo-text-container" style="display: flex; flex-direction: column; line-height: 1;">
-          <span style="white-space: nowrap;">CBS <span class="highlight">3i-cell</span></span>
-          <span class="logo-subtitle" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; white-space: nowrap;">INDUSTRY INSTITUTE INTERFACE</span>
-        </div>
-      </a>
-      <div class="nav-links">
-        {% if session.get('user_id') %} {% if session.get('role') == 'admin' %}
-        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('manage_jobs') }}">Jobs</a>
-        <a href="{{ url_for('manage_announcements') }}">Town Hall</a>
-        <a href="{{ url_for('dynamic_forms.manage_forms') }}">Forms</a>
-        {% else %}
-        <!-- Student Desktop Nav -->
-        <a href="{{ url_for('student_dashboard') }}">Home</a>
-        <a href="{{ url_for('student_jobs') }}">Jobs</a>
-        <a href="{{ url_for('dynamic_forms.list_student_forms') }}">Forms</a>
-        <a href="{{ url_for('student_profile') }}">Profile</a>
-
-        <div class="notif-wrapper">
-          <button class="notif-btn" onclick="toggleNotifs(event)">
-            <i class="ph ph-bell"></i>
-            <span class="notif-badge" id="notif-badge"></span>
-          </button>
-          <div class="notif-dropdown" id="notif-dropdown">
-            <div class="notif-header">Notifications</div>
-            <div id="notif-list" class="notif-list">
-              <div class="notif-item">Loading...</div>
-            </div>
+      <div class="nav-brand">
+        <a href="/" class="logo">
+          <img
+            src="{{ url_for('static', filename='images/logo1.png') }}"
+            alt="Logo"
+            class="logo-img"
+          />
+          <div class="logo-text-container">
+            <span class="logo-main">
+              CBS <span class="highlight">3i-cell</span>
+            </span>
+            <span class="logo-subtitle"> INDUSTRY INSTITUTE INTERFACE </span>
           </div>
-        </div>
-        {% endif %}
+        </a>
+      </div>
 
+      <!-- Desktop Nav Links (Hidden on Mobile) -->
+      <div class="nav-links desktop-only">
+        {% if session.get('user_id') %} {% if session.get('role') == 'admin' %}
+        <a
+          href="{{ url_for('admin_dashboard') }}"
+          class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+          >Dashboard</a
+        >
+        <a
+          href="{{ url_for('manage_jobs') }}"
+          class="nav-link {% if request.endpoint == 'manage_jobs' %}active{% endif %}"
+          >Jobs</a
+        >
+        <a
+          href="{{ url_for('manage_announcements') }}"
+          class="nav-link {% if request.endpoint == 'manage_announcements' %}active{% endif %}"
+          >Town Hall</a
+        >
+        <a
+          href="{{ url_for('dynamic_forms.manage_forms') }}"
+          class="nav-link {% if request.endpoint == 'manage_forms' %}active{% endif %}"
+          >Forms</a
+        >
         {% else %}
-        <a href="{{ url_for('login') }}">Login</a>
-        <a href="{{ url_for('signup') }}" class="btn-primary">Student Signup</a>
+        <a
+          href="{{ url_for('student_dashboard') }}"
+          class="nav-link {% if request.endpoint == 'student_dashboard' %}active{% endif %}"
+          >Home</a
+        >
+        <a
+          href="{{ url_for('student_jobs') }}"
+          class="nav-link {% if request.endpoint == 'student_jobs' %}active{% endif %}"
+          >Jobs</a
+        >
+        <a
+          href="{{ url_for('student_announcements') }}"
+          class="nav-link {% if request.endpoint == 'student_announcements' %}active{% endif %}"
+          >Town Hall</a
+        >
+        <a
+          href="{{ url_for('dynamic_forms.list_student_forms') }}"
+          class="nav-link {% if request.endpoint == 'list_student_forms' %}active{% endif %}"
+          >Forms</a
+        >
+        <a
+          href="{{ url_for('student_profile') }}"
+          class="nav-link {% if request.endpoint == 'student_profile' %}active{% endif %}"
+          >Profile</a
+        >
+        {% endif %} {% else %}
+        <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+        <a href="{{ url_for('signup') }}" class="btn btn-sm btn-primary"
+          >Student Signup</a
+        >
         {% endif %}
       </div>
-      <!-- Nav Controls (Right Side) -->
-      <div class="nav-controls" style="display: flex; gap: 0.75rem; align-items: center;">
-          <!-- Theme Toggle -->
-          <button
-            class="theme-toggle-btn"
-            onclick="toggleTheme()"
-            aria-label="Toggle Dark Mode"
-            style="margin: 0;"
-          >
-            <i class="ph-fill ph-moon"></i>
-          </button>
-          
-          {% if session.get('user_id') %}
-          <!-- Logout Button (Icon only on mobile, Text on desktop) -->
-          <button onclick="showLogoutModal(event)" class="btn-secondary btn-logout-top" title="Logout" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;">
-              <i class="ph-bold ph-sign-out"></i>
-              <span class="logout-text">Logout</span>
-          </button>
+
+      <!-- Nav Controls -->
+      <div class="nav-controls">
+        <button
+          class="theme-toggle-btn"
+          onclick="toggleTheme()"
+          aria-label="Toggle Dark Mode"
+        >
+          <i class="ph-fill ph-moon"></i>
+        </button>
+
+        {% if session.get('user_id') %}
+        <!-- Notification Bell -->
+        <a
+          href="{{ url_for('notifications_page') }}"
+          class="btn-icon-nav"
+          aria-label="Notifications"
+        >
+          <i class="ph-bold ph-bell"></i>
+          {% if unread_notifications_count and unread_notifications_count > 0 %}
+          <span class="notif-badge">
+            {{ unread_notifications_count if unread_notifications_count < 10
+            else '9+' }}
+          </span>
           {% endif %}
+        </a>
+
+        <!-- Desktop Logout -->
+        <button
+          onclick="showLogoutModal(event)"
+          class="btn-logout"
+          title="Logout"
+        >
+          <i class="ph-bold ph-sign-out"></i>
+          <span>Logout</span>
+        </button>
+        {% endif %}
       </div>
     </nav>
     {% endif %}
-
-
 
     <div class="container">
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -242,7 +288,36 @@
       </div>
     </div>
 
-    <!-- Mobile Bottom Navigation -->
+    <!-- Real-time Notification Polling -->
+    <script>
+      // Notification polling for real-time updates
+      let lastCheckTime = new Date().toISOString();
+
+      function checkNewNotifications() {
+        fetch('/api/notifications/check?last_check=' + encodeURIComponent(lastCheckTime))
+          .then(response => response.json())
+          .then(data => {
+            if (data.new_count > 0) {
+              // Update notification badge
+              const badge = document.querySelector('.notif-badge');
+              if (badge) {
+                badge.textContent = data.new_count < 10 ? data.new_count : '9+';
+                badge.style.display = 'flex';
+              }
+            }
+          })
+          .catch(err => console.log('Notification check failed:', err));
+      }
+
+      // Start polling when user is logged in
+      {% if session.get('user_id') %}
+      // Check every 30 seconds
+      setInterval(checkNewNotifications, 30000);
+      // Update last check time after page load
+      lastCheckTime = new Date().toISOString();
+      {% endif %}
+    </script>
+
     {% if session.get('user_id') and request.endpoint not in ['login', 'signup',
     'login_post', 'signup_post'] %}
     <nav class="mobile-bottom-nav">
@@ -266,24 +341,25 @@
           href="{{ url_for('manage_users') }}"
           class="mobile-nav-item center-item"
         >
-          <i class="ph-fill ph-plus"></i>
-          <span>Users</span>
+          <i class="ph-fill ph-users"></i>
+          <!-- Users -->
         </a>
         <a
           href="{{ url_for('manage_announcements') }}"
           class="mobile-nav-item {% if request.endpoint == 'manage_announcements' %}active{% endif %}"
         >
-          <i class="ph-fill ph-building"></i>
-          <span>Town Hall</span>
+          <i class="ph-fill ph-megaphone"></i>
+          <span>TownHall</span>
         </a>
         <a
           href="{{ url_for('view_applications') }}"
           class="mobile-nav-item {% if request.endpoint == 'view_applications' %}active{% endif %}"
         >
-          <i class="ph-fill ph-list"></i>
+          <i class="ph-fill ph-files"></i>
           <span>Apps</span>
         </a>
         {% else %}
+        <!-- STUDENT NAV -->
         <a
           href="{{ url_for('student_jobs') }}"
           class="mobile-nav-item {% if request.endpoint == 'student_jobs' %}active{% endif %}"
@@ -292,18 +368,27 @@
           <span>Jobs</span>
         </a>
         <a
-          href="{{ url_for('dynamic_forms.list_student_forms') }}"
-          class="mobile-nav-item {% if request.endpoint == 'list_student_forms' %}active{% endif %}"
+          href="{{ url_for('student_announcements') }}"
+          class="mobile-nav-item {% if request.endpoint == 'student_announcements' %}active{% endif %}"
         >
-          <i class="ph-fill ph-clipboard-text"></i>
-          <span>Forms</span>
+          <i class="ph-fill ph-megaphone"></i>
+          <span>TownHall</span>
         </a>
+
         <a
           href="{{ url_for('student_dashboard') }}"
           class="mobile-nav-item center-item {% if request.endpoint == 'student_dashboard' %}active{% endif %}"
         >
           <i class="ph-fill ph-house"></i>
           <span>Home</span>
+        </a>
+
+        <a
+          href="{{ url_for('dynamic_forms.list_student_forms') }}"
+          class="mobile-nav-item {% if request.endpoint == 'list_student_forms' %}active{% endif %}"
+        >
+          <i class="ph-fill ph-clipboard-text"></i>
+          <span>Forms</span>
         </a>
         <a
           href="{{ url_for('student_profile') }}"
@@ -312,14 +397,163 @@
           <i class="ph-fill ph-user"></i>
           <span>Profile</span>
         </a>
-        <a href="#" onclick="showLogoutModal(event)" class="mobile-nav-item">
-          <i class="ph-fill ph-sign-out"></i>
-          <span>Logout</span>
-        </a>
         {% endif %}
       </div>
     </nav>
     {% endif %}
+
+    <style id="security-guard-style">
+      .security-popup {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(252, 253, 255, 0.65);
+        background-image: linear-gradient(
+          -20deg,
+          #fc607544 0%rgba (255, 155, 68, 0.29) 44 100%
+        ) !important;
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .security-popup.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .security-card {
+        background: #0b1021;
+        background-image: linear-gradient(
+          -20deg,
+          #fc6076 0%,
+          #ff9a44 100%
+        ) !important;
+        color: #e2e8f0 !important ;
+        padding: 16px 18px;
+        border-radius: 14px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+        min-width: 260px;
+        max-width: 360px;
+        font-family: "Space Grotesk", "DM Sans", "Helvetica Neue", sans-serif;
+      }
+      .security-title {
+        margin: 0 0 6px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .security-msg {
+        margin: 0;
+        font-size: 14px;
+        color: #cbd5e1;
+      }
+      .security-btn {
+        margin-top: 12px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #475569;
+        background: #ffffff;
+        color: #000000;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+    </style>
+
+    <script>
+      (() => {
+        const popup = document.createElement("div");
+        popup.className = "security-popup";
+        popup.innerHTML = `
+    <div class="security-card">
+      <p class="security-title">Action Blocked</p>
+      <p class="security-msg" id="security-msg">This action is disabled on this page.</p>
+      <button class="security-btn" id="security-btn">OK</button>
+    </div>`;
+        document.body.appendChild(popup);
+
+        const msgEl = popup.querySelector("#security-msg");
+        const btnEl = popup.querySelector("#security-btn");
+        let hideTimer;
+
+        const showPopup = (text) => {
+          msgEl.textContent = text;
+          popup.classList.add("show");
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => popup.classList.remove("show"), 2200);
+        };
+
+        btnEl.addEventListener("click", () => popup.classList.remove("show"));
+
+        const block = (text, e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showPopup(text);
+        };
+
+        // Mouse + selection
+        document.addEventListener(
+          "contextmenu",
+          (e) => block("Right click is disabled here.", e),
+          true,
+        );
+        document.addEventListener(
+          "copy",
+          (e) => block("Copy is disabled.", e),
+          true,
+        );
+        document.addEventListener(
+          "cut",
+          (e) => block("Cut is disabled.", e),
+          true,
+        );
+        document.addEventListener(
+          "dragstart",
+          (e) => block("Drag is disabled.", e),
+          true,
+        );
+
+        // Keyboard shortcuts / dev tools hints
+        document.addEventListener(
+          "keydown",
+          async (e) => {
+            const key = e.key.toLowerCase();
+            const meta = e.ctrlKey || e.metaKey;
+            if (e.key === "F12" || (meta && e.shiftKey && key === "i"))
+              block("Developer tools are blocked.", e);
+            if (meta && ["c", "x", "u", "s", "p"].includes(key))
+              block("Shortcut disabled.", e);
+            if (e.key === "PrintScreen") {
+              showPopup("Screenshot blocked.");
+              try {
+                await navigator.clipboard.writeText("");
+              } catch (_) {}
+            }
+          },
+          true,
+        );
+
+        // Simple devtools detection (best-effort only)
+        let flagged = false;
+        setInterval(() => {
+          const open =
+            window.outerWidth - window.innerWidth > 160 ||
+            window.outerHeight - window.innerHeight > 160;
+          if (open && !flagged) {
+            flagged = true;
+            showPopup("Developer tools detected.");
+            // Optional: add page blur
+            document.body.style.filter = "blur(3px)";
+          } else if (!open && flagged) {
+            flagged = false;
+            document.body.style.filter = "";
+          }
+        }, 1000);
+      })();
+    </script>
 
     <!-- Service Worker Registration -->
     <script>
@@ -339,13 +573,13 @@
 
       // Mobile Menu Logic
       function toggleMobileMenu() {
-        const menu = document.getElementById('mobileMenu');
-        menu.classList.toggle('active');
+        const menu = document.getElementById("mobileMenu");
+        menu.classList.toggle("active");
         // Prevent body scroll when menu is open
-        if (menu.classList.contains('active')) {
-            document.body.style.overflow = 'hidden';
+        if (menu.classList.contains("active")) {
+          document.body.style.overflow = "hidden";
         } else {
-            document.body.style.overflow = '';
+          document.body.style.overflow = "";
         }
       }
 

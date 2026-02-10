@@ -1,4 +1,6 @@
-{% extends 'base.html' %} {% block title %}Manage Applications - Chetan Business School{% endblock %} {% block content %}
+import os
+
+content = '''{% extends 'base.html' %} {% block title %}Manage Applications - Chetan Business School{% endblock %} {% block content %}
 <div class="section-card glass-card">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <div>
@@ -116,3 +118,9 @@
   .data-table tbody tr { transition: background-color 0.2s; }
 </style>
 {% endblock %}
+'''
+
+os.chdir('c:/Users/vikra/OneDrive/Desktop/placement -org/placement-cell-project/placement-cell-project')
+with open('templates/admin/applications.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('File written successfully')

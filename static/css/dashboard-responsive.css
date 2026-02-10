@@ -23,6 +23,23 @@
 /* ========== ADMIN DASHBOARD RESPONSIVE UPDATES ========== */
 
 @media (max-width: 768px) {
+  .logo {
+    font-size: 1.1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: -8.4rem;
+    font-weight: 800;
+    color: #0004b8;
+    letter-spacing: -0.02em;
+    align-content: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: center;
+  }
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -635,13 +652,18 @@
 }
 
 /* ==================== GLOBAL OVERFLOW PROTECTION ==================== */
-html, body {
+html,
+body {
   overflow-x: hidden;
   width: 100%;
   position: relative;
 }
 
-img, video, iframe, canvas, svg {
+img,
+video,
+iframe,
+canvas,
+svg {
   max-width: 100%;
   height: auto;
 }
@@ -655,14 +677,15 @@ img, video, iframe, canvas, svg {
     width: 100%;
     overflow-x: hidden; /* Prevent horizontal scroll within container */
   }
-  
+
   /* Ensure no element exceeds viewport width */
   * {
     max-width: 100vw;
   }
-  
+
   /* Exception for scrolling containers */
-  .data-table-container, .scroll-wrapper {
+  .data-table-container,
+  .scroll-wrapper {
     max-width: 100vw;
     overflow-x: auto !important;
   }
@@ -671,23 +694,23 @@ img, video, iframe, canvas, svg {
 /* ==================== RESPONSIVE TABLES (CARD VIEW) ==================== */
 @media (max-width: 768px) {
   /* Force table to not be like tables anymore */
-  .data-table, 
-  .data-table thead, 
-  .data-table tbody, 
-  .data-table th, 
-  .data-table td, 
-  .data-table tr { 
-    display: block; 
+  .data-table,
+  .data-table thead,
+  .data-table tbody,
+  .data-table th,
+  .data-table td,
+  .data-table tr {
+    display: block;
   }
 
   /* Hide table headers (but not display: none;, for accessibility) */
-  .data-table thead tr { 
+  .data-table thead tr {
     position: absolute;
     top: -9999px;
     left: -9999px;
   }
 
-  .data-table tr { 
+  .data-table tr {
     border: 1px solid var(--border);
     margin-bottom: 1rem;
     border-radius: var(--radius);
@@ -696,12 +719,12 @@ img, video, iframe, canvas, svg {
     box-shadow: var(--shadow-sm);
   }
 
-  .data-table td { 
+  .data-table td {
     /* Behave  like a "row" */
     border: none;
-    border-bottom: 1px solid #eee; 
+    border-bottom: 1px solid #eee;
     position: relative;
-    padding-left: 50% !important; 
+    padding-left: 50% !important;
     padding-right: 0 !important;
     padding-top: 0.75rem !important;
     padding-bottom: 0.75rem !important;
@@ -713,7 +736,7 @@ img, video, iframe, canvas, svg {
     box-sizing: border-box; /* Ensure padding is included */
   }
 
-  .data-table td:before { 
+  .data-table td:before {
     /* Now like a table header */
     content: attr(data-label);
     font-weight: 600;
@@ -726,7 +749,7 @@ img, video, iframe, canvas, svg {
   .data-table td:last-child {
     border-bottom: 0;
   }
-  
+
   /* Dark mode fix for border */
   [data-theme="dark"] .data-table td {
     border-bottom-color: var(--border);
@@ -737,7 +760,7 @@ img, video, iframe, canvas, svg {
 @media (max-width: 480px) {
   .form-control,
   .form-select,
-  .btn, 
+  .btn,
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -751,11 +774,15 @@ img, video, iframe, canvas, svg {
   }
 
   /* Fix groups that might be flex-row */
-  .row, .d-flex, .input-group {
+  .row,
+  .d-flex,
+  .input-group {
     flex-wrap: wrap;
   }
-  
-  .col, .col-6, .col-md-6 {
+
+  .col,
+  .col-6,
+  .col-md-6 {
     flex: 0 0 100%;
     max-width: 100%;
   }
@@ -766,9 +793,10 @@ img, video, iframe, canvas, svg {
     display: block;
     width: 100%;
   }
-  
+
   /* Fix checkboxes/radios alignment */
-  input[type="checkbox"], input[type="radio"] {
+  input[type="checkbox"],
+  input[type="radio"] {
     width: auto !important;
     min-height: auto !important;
     margin-right: 0.5rem;

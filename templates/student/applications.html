@@ -1,0 +1,193 @@
+{% extends 'base.html' %} {% block title %}My Applications - CBS 3i-cell{%
+endblock %} {% block content %}
+<div class="section-card glass-card">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    "
+  >
+    <h2>
+      <i
+        class="ph-bold ph-paper-plane-tilt"
+        style="color: var(--primary); margin-right: 0.5rem"
+      ></i>
+      My Applications
+    </h2>
+    <a href="{{ url_for('student_dashboard') }}" class="btn-secondary">
+      <i class="ph ph-arrow-left"></i> Dashboard
+    </a>
+  </div>
+
+  {% if applications %}
+  <div class="applications-grid" style="display: grid; gap: 1.5rem">
+    {% for app in applications %}
+    <div class="glass-card" style="padding: 1.5rem; position: relative">
+      <!-- Status Badge -->
+      <div style="position: absolute; top: 1.5rem; right: 1.5rem">
+        {% set status_val = app.status or 'Unknown' %}
+        <span
+          class="status-badge {{ status_val|lower|replace(' ', '-') }}"
+          style="padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; 
+              background: {% if status_val == 'Selected' %}rgba(34, 197, 94, 0.1); color: #16a34a;
+              {% elif status_val == 'Rejected' %}rgba(239, 68, 68, 0.1); color: #dc2626;
+              {% elif status_val in ['Interview', 'GD'] %}rgba(234, 179, 8, 0.1); color: #ca8a04;
+              {% else %}rgba(99, 102, 241, 0.1); color: var(--primary);{% endif %}"
+        >
+          {{ status_val }}
+        </span>
+      </div>
+
+      <div style="margin-bottom: 1rem">
+        {% if app.job_info %}
+        <h3 style="margin-bottom: 0.25rem">
+          {{ app.job_info.company_name or 'Unknown Company' }}
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem">
+          {{ app.job_info.role or 'Unknown Role' }}
+        </p>
+        {% else %}
+        <h3 style="margin-bottom: 0.25rem">Job Details Unavailable</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem">
+          This job may have been removed
+        </p>
+        {% endif %}
+      </div>
+
+      <div
+        style="
+          display: flex;
+          gap: 2rem;
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <span
+          ><i class="ph ph-calendar"></i> Applied: {{
+          app.applied_at.strftime('%d %b %Y') if app.applied_at else 'Unknown'
+          }}</span
+        >
+        {% if app.job_info and app.job_info.drive_date %}
+        <span
+          ><i class="ph ph-clock"></i> Drive: {{
+          app.job_info.drive_date.strftime('%d %b %Y') if
+          app.job_info.drive_date is not string else app.job_info.drive_date
+          }}</span
+        >
+        {% endif %}
+      </div>
+
+      <!-- Action Area for Interview/GD -->
+      {% if app.status in ['Interview', 'GD'] %}
+      <div
+        style="
+          background: rgba(234, 179, 8, 0.05);
+          padding: 1.25rem;
+          border-radius: 12px;
+          border: 1px solid rgba(234, 179, 8, 0.2);
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          "
+        >
+          <i
+            class="ph-fill ph-info"
+            style="color: #ca8a04; font-size: 1.5rem"
+          ></i>
+          <div>
+            <h4 style="color: #ca8a04; font-size: 1rem; margin-bottom: 0.25rem">
+              Action Required
+            </h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted)">
+              Please confirm your attendance for the {{ app.status }}.
+            </p>
+          </div>
+        </div>
+
+        {% if app.student_response %}
+        <div style="margin-top: 0.5rem; font-weight: 600">
+          Your Response:
+          <span
+            style="color: {% if app.student_response == 'Attending' %}#16a34a{% else %}#dc2626{% endif %};"
+          >
+            {{ app.student_response }}
+          </span>
+          <span
+            style="
+              font-size: 0.8rem;
+              color: var(--text-muted);
+              font-weight: 400;
+            "
+          >
+            (Recorded on {{ app.response_at.strftime('%d %b %H:%M') if
+            app.response_at else 'Unknown' }})
+          </span>
+        </div>
+        {% else %}
+        <div style="display: flex; gap: 1rem">
+          <form
+            action="{{ url_for('respond_application', app_id=app._id) }}"
+            method="POST"
+          >
+            <input type="hidden" name="response" value="Attending" />
+            <button
+              type="submit"
+              class="btn-primary"
+              style="
+                background: linear-gradient(135deg, #16a34a, #22c55e);
+                border: none;
+              "
+            >
+              <i class="ph-bold ph-check"></i> I Will Attend
+            </button>
+          </form>
+          <form
+            action="{{ url_for('respond_application', app_id=app._id) }}"
+            method="POST"
+          >
+            <input type="hidden" name="response" value="Not Attending" />
+            <button
+              type="submit"
+              class="btn-secondary"
+              style="
+                background: rgba(239, 68, 68, 0.1);
+                color: #dc2626;
+                border: 1px solid rgba(239, 68, 68, 0.2);
+              "
+            >
+              <i class="ph-bold ph-x"></i> Not Attending
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted)">
+    <i
+      class="ph-duotone ph-paper-plane-tilt"
+      style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5"
+    ></i>
+    <h3>No applications yet</h3>
+    <p>
+      Head over to the
+      <a href="{{ url_for('student_jobs') }}" style="color: var(--primary)"
+        >Job Portal</a
+      >
+      to apply.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

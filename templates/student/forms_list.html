@@ -1,40 +1,123 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h2 style="color: var(--primary); margin: 0;">Available Forms & Surveys</h2>
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    "
+  >
+    <h2 style="color: var(--primary); margin: 0">Forms & Surveys</h2>
     <a href="{{ url_for('student_dashboard') }}" class="btn-secondary">
       <i class="ph-bold ph-arrow-left"></i> Back
     </a>
   </div>
-  
+
+  <!-- My Submitted Forms Section -->
+  {% if my_responses %}
+  <div style="margin-bottom: 2rem">
+    <h3 style="color: var(--text-main); margin-bottom: 1rem">
+      <i class="ph-bold ph-check-circle" style="color: var(--success)"></i> My
+      Submitted Forms
+    </h3>
+    <div class="jobs-grid">
+      {% for response in my_responses %}
+      <div
+        class="job-card glass-card"
+        style="border-left: 4px solid var(--success)"
+      >
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div
+            class="job-icon"
+            style="background: var(--success); color: white"
+          >
+            <i
+              class="ph-duotone ph-clipboard-text"
+              style="font-size: 1.5rem"
+            ></i>
+          </div>
+          <span class="badge" style="background: var(--success); color: white"
+            >Submitted</span
+          >
+        </div>
+
+        <h4 class="mb-2">
+          {% for form in forms %}{% if form._id == response.form_id %}{{
+          form.title }}{% endif %}{% endfor %}
+        </h4>
+        <p
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Submitted: {{ response.submitted_at.strftime('%d %b %Y, %H:%M') if
+          response.submitted_at else 'N/A' }}
+        </p>
+
+        <div
+          style="
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+          "
+        >
+          <p style="font-size: 0.9rem; color: var(--text-muted)">
+            <strong>Responses:</strong>
+          </p>
+          <ul
+            style="
+              font-size: 0.85rem;
+              color: var(--text-main);
+              padding-left: 1.2rem;
+            "
+          >
+            {% for key, value in response.answers.items() %}
+            <li>
+              {{ key }}: {% if value|length > 50 %}{{ value[:50] }}...{% else
+              %}{{ value }}{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Available Forms Section -->
+  <h3 style="color: var(--text-main); margin-bottom: 1rem">
+    <i class="ph-bold ph-clipboard-list"></i> Available Forms
+  </h3>
   <div class="jobs-grid">
-    {% for form in forms %}
+    {% for form in forms %} {% if form._id not in submitted_ids %}
     <div class="job-card glass-card">
       <div class="d-flex justify-content-between align-items-start mb-3">
         <div class="job-icon">
-          <i class="ph-duotone ph-clipboard-text" style="font-size: 2rem; color: var(--primary);"></i>
+          <i
+            class="ph-duotone ph-clipboard-text"
+            style="font-size: 2rem; color: var(--primary)"
+          ></i>
         </div>
-        {% if form._id in submitted_ids %}
-        <span class="badge" style="background: var(--surface-heavy); color: var(--text-muted);">Submitted</span>
-        {% else %}
         <span class="badge">Open</span>
-        {% endif %}
       </div>
-      
+
       <h3 class="mb-2">{{ form.title }}</h3>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">{{ form.description }}</p>
-      
-      {% if form._id not in submitted_ids %}
-      <a href="{{ url_for('dynamic_forms.fill_form', form_id=form._id) }}" class="btn-primary w-100">
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem">
+        {{ form.description }}
+      </p>
+
+      <a
+        href="{{ url_for('dynamic_forms.fill_form', form_id=form._id) }}"
+        class="btn-primary w-100"
+      >
         Fill Out Form
       </a>
-      {% else %}
-      <button class="btn-secondary w-100" disabled>Already Submitted</button>
-      {% endif %}
     </div>
-    {% else %}
+    {% endif %} {% else %}
     <div class="col-12 text-center text-muted">
       <p>No active forms or surveys at the moment.</p>
     </div>

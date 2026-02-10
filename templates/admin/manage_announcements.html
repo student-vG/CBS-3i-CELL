@@ -1,5 +1,5 @@
-{% extends 'base.html' %} {% block title %}Town Hall - CBS 3i-cell{%
-endblock %} {% block content %}
+{% extends 'base.html' %} {% block title %}Town Hall - CBS 3i-cell{% endblock %}
+{% block content %}
 <div class="section-card glass-card">
   <div
     style="
@@ -66,6 +66,9 @@ endblock %} {% block content %}
       data-status="{{ ann.status or 'draft' }}"
       style="
         display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
         flex-direction: column;
         height: 100%;
         position: relative;
@@ -144,16 +147,17 @@ endblock %} {% block content %}
         >
           Is Public:
           <strong>{{ 'Yes' if ann.target_all_students else 'No' }}</strong> • {%
-          if ann.get('created_at') %} {{ ann.created_at.strftime('%d %b %H:%M')
-          }} {% else %} N/A {% endif %}
+          if ann.created_at %} {{ ann.created_at.strftime('%d %b %H:%M') }} {%
+          else %} N/A {% endif %}
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="d-flex gap-2 mt-3 pt-3 border-top">
+      <div class="anno-btns d-flex gap-2 mt-3 pt-3 border-top">
         <button
           class="btn-sm btn-secondary flex-grow-1"
-          onclick="openModal({{ loop.index0 }})"
+          data-index="{{ loop.index0 }}"
+          onclick="openModal(this.dataset.index)"
         >
           Edit
         </button>
@@ -391,65 +395,69 @@ endblock %} {% block content %}
   }
 </style>
 
+<script id="announcements-data" type="application/json">
+  {{ announcements_data | tojson | safe }}
+</script>
 <script>
-  const data = [
-    {% for ann in announcements %}
-      {{ ann.safe_data | tojson | safe }},
-    {% endfor %}
-  ];
+  const data = JSON.parse(
+    document.getElementById("announcements-data").textContent,
+  );
 
   function setAction(status) {
-      document.getElementById('action').value = status;
+    document.getElementById("action").value = status;
   }
 
   function openModal(index = -1) {
-    const modal = document.getElementById('annModal');
-    const form = document.getElementById('annForm');
-    const title = document.getElementById('modalTitle');
+    const modal = document.getElementById("annModal");
+    const form = document.getElementById("annForm");
+    const title = document.getElementById("modalTitle");
 
     if (index >= 0 && data[index]) {
       const item = data[index];
-      title.textContent = 'Edit Announcement';
+      title.textContent = "Edit Announcement";
 
-      document.getElementById('title').value = item.title;
-      document.getElementById('category').value = item.category || 'General';
-      document.getElementById('priority').value = item.priority || 'normal';
-      document.getElementById('content').value = item.content;
-      document.getElementById('url').value = item.external_url || '';
-      document.getElementById('target_all_students').checked = item.target_all_students !== false;
+      document.getElementById("title").value = item.title;
+      document.getElementById("category").value = item.category || "General";
+      document.getElementById("priority").value = item.priority || "normal";
+      document.getElementById("content").value = item.content;
+      document.getElementById("url").value = item.external_url || "";
+      document.getElementById("target_all_students").checked =
+        item.target_all_students !== false;
 
       form.action = `/admin/announcements/${item._id}/edit`;
     } else {
-      title.textContent = 'New Announcement';
+      title.textContent = "New Announcement";
       form.reset();
       form.action = "{{ url_for('add_announcement') }}";
     }
 
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Lock Body Scroll
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // Lock Body Scroll
   }
 
   function closeModal() {
-    document.getElementById('annModal').style.display = 'none';
-    document.body.style.overflow = ''; // Unlock Body Scroll
+    document.getElementById("annModal").style.display = "none";
+    document.body.style.overflow = ""; // Unlock Body Scroll
   }
 
   function filterItems(status) {
-      document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+    document
+      .querySelectorAll(".status-tab")
+      .forEach((t) => t.classList.remove("active"));
+    event.target.classList.add("active");
 
-      document.querySelectorAll('.item-card-element').forEach(card => {
-          if (status === 'all' || card.dataset.status === status) {
-              card.style.display = 'flex';
-          } else {
-              card.style.display = 'none';
-          }
-      });
+    document.querySelectorAll(".item-card-element").forEach((card) => {
+      if (status === "all" || card.dataset.status === status) {
+        card.style.display = "flex";
+      } else {
+        card.style.display = "none";
+      }
+    });
   }
 
   // Close modal on outside click
-  document.getElementById('annModal').addEventListener('click', (e) => {
-      if(e.target === e.currentTarget) closeModal();
+  document.getElementById("annModal").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeModal();
   });
 </script>
 {% endblock %}

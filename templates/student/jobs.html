@@ -92,31 +92,40 @@ endblock %} {% block content %}
         <span><i class="ph ph-calendar"></i> Drive: {{ job.drive_date }}</span>
       </div>
 
-      <div
-        style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap"
-      >
         {% if job.attachment_id %}
-        <a
-          href="{{ url_for('file_serving.serve_file', file_id=job.attachment_id) }}"
-          target="_blank"
-          class="btn-sm btn-secondary"
-          style="font-size: 0.8rem; padding: 0.25rem 0.5rem"
-        >
-          <i class="ph-bold ph-paperclip"></i> View File
-        </a>
-        {% endif %} {% if job.external_url %}
-        <a
-          href="{{ job.external_url }}"
-          target="_blank"
-          class="btn-sm btn-secondary"
-          style="font-size: 0.8rem; padding: 0.25rem 0.5rem"
-        >
-          <i class="ph-bold ph-link"></i> Visit Link
-        </a>
-        {% endif %}
+        <div class="attachment-preview" style="width: 100%; margin-bottom: 1rem;">
+            {% set ext = job.safe_data.get('attachment_filename', '').split('.')[-1] | lower if job.safe_data and job.safe_data.get('attachment_filename') else 'file' %}
+            
+            {# Since we don't have easy filename access in template without safe_data sometimes, we rely on a generic check or if you stored it #}
+            {# For now, assuming we assume standard download button but let's try to be smart if possible #}
+            
+            <a href="{{ url_for('file_serving.serve_file', file_id=job.attachment_id) }}" target="_blank" class="attachment-card">
+                <div class="att-icon">
+                    <i class="ph-bold ph-file-text"></i>
+                </div>
+                <div class="att-info">
+                    <span>View Attachment</span>
+                    <small>Click to open</small>
+                </div>
+                <i class="ph-bold ph-arrow-square-out"></i>
+            </a>
+        </div>
+        {% endif %} 
+        
+        <div class="job-actions" style="display: flex; gap: 0.5rem; width: 100%;">
+             {% if job.external_url %}
+            <a
+              href="{{ job.external_url }}"
+              target="_blank"
+              class="btn-secondary"
+              style="flex: 1;"
+            >
+              <i class="ph-bold ph-link"></i> Apply Link
+            </a>
+            {% endif %}
       </div>
 
-      {% if job._id in applied_job_ids %}
+      {% if job._id|string in applied_job_ids_str %}
       <button class="btn-secondary w-100" disabled>
         <i class="ph ph-check-circle"></i> Already Applied
       </button>

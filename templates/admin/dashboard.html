@@ -44,287 +44,77 @@ School{% endblock %} {% block head %}
   <div
     style="
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     "
   >
     <!-- Total Students Card -->
-    <div
-      class="glass-card-heavy"
-      style="padding: 1.75rem; position: relative; overflow: hidden"
-    >
-      <div
-        style="
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 100px;
-          height: 100px;
-          background: rgba(99, 102, 241, 0.1);
-          border-radius: 50%;
-        "
-      ></div>
-      <div style="position: relative; z-index: 1">
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-          "
-        >
+    <div class="glass-card-heavy dashboard-stat-card">
+      <div class="stat-decor-circle" style="background: rgba(99, 102, 241, 0.1);"></div>
+      <div class="dashboard-stat-header">
           <div>
-            <p
-              style="
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-              "
-            >
-              Total Students
-            </p>
-            <h2
-              style="color: var(--primary); font-size: 2.5rem; font-weight: 700"
-            >
-              {{ stats.total_students }}
-            </h2>
+            <p class="dashboard-stat-label">Total Students</p>
+            <h2 class="dashboard-stat-value" style="color: var(--primary);">{{ stats.total_students }}</h2>
           </div>
-          <div
-            style="
-              background: var(--gradient);
-              color: white;
-              width: 60px;
-              height: 60px;
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.8rem;
-            "
-          >
+          <div class="dashboard-stat-icon-box" style="background: var(--gradient); color: white;">
             <i class="ph-fill ph-users"></i>
           </div>
-        </div>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: #10b981;
-          "
-        >
-          <i class="ph ph-trending-up"></i> <span>Approved students</span>
-        </div>
+      </div>
+      <div class="dashboard-stat-trend" style="color: #10b981;">
+          <i class="ph-bold ph-trend-up"></i> <span>Approved & Active</span>
       </div>
     </div>
 
     <!-- Active Jobs Card -->
-    <div
-      class="glass-card-heavy"
-      style="padding: 1.75rem; position: relative; overflow: hidden"
-    >
-      <div
-        style="
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 100px;
-          height: 100px;
-          background: rgba(6, 182, 212, 0.1);
-          border-radius: 50%;
-        "
-      ></div>
-      <div style="position: relative; z-index: 1">
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-          "
-        >
+    <div class="glass-card-heavy dashboard-stat-card">
+      <div class="stat-decor-circle" style="background: rgba(6, 182, 212, 0.1);"></div>
+      <div class="dashboard-stat-header">
           <div>
-            <p
-              style="
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-              "
-            >
-              Active Jobs
-            </p>
-            <h2 style="color: #06b6d4; font-size: 2.5rem; font-weight: 700">
-              {{ stats.total_jobs }}
-            </h2>
+            <p class="dashboard-stat-label">Active Jobs</p>
+            <h2 class="dashboard-stat-value" style="color: #06b6d4;">{{ stats.total_jobs }}</h2>
           </div>
-          <div
-            style="
-              background: linear-gradient(135deg, #06b6d4, #10b981);
-              color: white;
-              width: 60px;
-              height: 60px;
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.8rem;
-            "
-          >
+          <div class="dashboard-stat-icon-box" style="background: linear-gradient(135deg, #06b6d4, #10b981);">
             <i class="ph-fill ph-briefcase"></i>
           </div>
-        </div>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: #06b6d4;
-          "
-        >
-          <i class="ph ph-trending-up"></i> <span>Posted openings</span>
-        </div>
+      </div>
+      <div class="dashboard-stat-trend" style="color: #06b6d4;">
+          <i class="ph-bold ph-lightning"></i> <span>Hiring Now</span>
       </div>
     </div>
 
     <!-- Total Applications Card -->
-    <div
-      class="glass-card-heavy"
-      style="padding: 1.75rem; position: relative; overflow: hidden"
-    >
-      <div
-        style="
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 100px;
-          height: 100px;
-          background: rgba(244, 63, 94, 0.1);
-          border-radius: 50%;
-        "
-      ></div>
-      <div style="position: relative; z-index: 1">
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-          "
-        >
+    <div class="glass-card-heavy dashboard-stat-card">
+      <div class="stat-decor-circle" style="background: rgba(244, 63, 94, 0.1);"></div>
+      <div class="dashboard-stat-header">
           <div>
-            <p
-              style="
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-              "
-            >
-              Total Applications
-            </p>
-            <h2 style="color: #f43f5e; font-size: 2.5rem; font-weight: 700">
-              {{ stats.total_applications }}
-            </h2>
+            <p class="dashboard-stat-label">Total Applications</p>
+            <h2 class="dashboard-stat-value" style="color: #f43f5e;">{{ stats.total_applications }}</h2>
           </div>
-          <div
-            style="
-              background: linear-gradient(135deg, #f43f5e, #fb923c);
-              color: white;
-              width: 60px;
-              height: 60px;
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.8rem;
-            "
-          >
+          <div class="dashboard-stat-icon-box" style="background: linear-gradient(135deg, #f43f5e, #fb923c);">
             <i class="ph-fill ph-file-text"></i>
           </div>
-        </div>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: #f43f5e;
-          "
-        >
-          <i class="ph ph-trending-up"></i> <span>Submissions</span>
-        </div>
+      </div>
+      <div class="dashboard-stat-trend" style="color: #f43f5e;">
+          <i class="ph-bold ph-paper-plane-tilt"></i> <span>Submitted</span>
       </div>
     </div>
 
     <!-- Pending Approvals Card (Super Admin Only) -->
     {% if admin_level == 'super_admin' %}
-    <div
-      class="glass-card-heavy"
-      style="padding: 1.75rem; position: relative; overflow: hidden"
-    >
-      <div
-        style="
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 100px;
-          height: 100px;
-          background: rgba(251, 146, 60, 0.1);
-          border-radius: 50%;
-        "
-      ></div>
-      <div style="position: relative; z-index: 1">
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-          "
-        >
+    <div class="glass-card-heavy dashboard-stat-card">
+      <div class="stat-decor-circle" style="background: rgba(251, 146, 60, 0.1);"></div>
+      <div class="dashboard-stat-header">
           <div>
-            <p
-              style="
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
-              "
-            >
-              Pending Approvals
-            </p>
-            <h2 style="color: #fb923c; font-size: 2.5rem; font-weight: 700">
-              {{ stats.pending_approvals | default(0) }}
-            </h2>
+            <p class="dashboard-stat-label">Pending Approvals</p>
+            <h2 class="dashboard-stat-value" style="color: #fb923c;">{{ stats.pending_approvals | default(0) }}</h2>
           </div>
-          <div
-            style="
-              background: linear-gradient(135deg, #fb923c, #f97316);
-              color: white;
-              width: 60px;
-              height: 60px;
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.8rem;
-            "
-          >
+          <div class="dashboard-stat-icon-box" style="background: linear-gradient(135deg, #fb923c, #f97316);">
             <i class="ph-fill ph-hourglass"></i>
           </div>
-        </div>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: #fb923c;
-          "
-        >
-          <i class="ph ph-alert"></i> <span>Awaiting action</span>
-        </div>
+      </div>
+      <div class="dashboard-stat-trend" style="color: #fb923c;">
+          <i class="ph-bold ph-warning-circle"></i> <span>Action Required</span>
       </div>
     </div>
     {% endif %}
@@ -596,105 +386,141 @@ School{% endblock %} {% block head %}
     </div>
   </div>
 
-  <!-- Bottom Section - Charts/Info -->
-  <div class="glass-card-heavy" style="padding: 2rem">
-    <h3
-      style="
-        color: var(--primary);
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      "
-    >
-      <i class="ph-bold ph-chart-bar" style="font-size: 1.2rem"></i>
-      Placement Statistics
-    </h3>
+  <!-- Visual Insights Section -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; align-items: stretch;">
+    
+    <!-- Chart Card -->
+    <div class="glass-card-heavy" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <h3 style="color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ph-bold ph-chart-pie-slice" style="font-size: 1.2rem;"></i>
+            Application Insights
+        </h3>
+        <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center; align-items: center;">
+            <canvas id="applicationChart"></canvas>
+            {% if stats.total_applications == 0 %}
+            <div style="position: absolute; color: var(--text-muted); font-size: 0.9rem;">
+                No applications yet
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
-    <div
-      style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-      "
-    >
-      <div
-        style="
-          text-align: center;
-          padding: 1.5rem;
-          background: rgba(99, 102, 241, 0.05);
-          border-radius: 12px;
-        "
-      >
-        <h4
-          style="
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-          "
-        >
-          Placement Rate
-        </h4>
-        <p style="color: var(--primary); font-size: 2.5rem; font-weight: 700">
-          85%
-        </p>
-        <p style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem">
-          <i class="ph ph-arrow-up"></i> +5% this month
-        </p>
-      </div>
+    <!-- Stats Grid (Placement Stats) -->
+    <div class="glass-card-heavy" style="padding: 2rem; display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-bold ph-chart-bar" style="font-size: 1.2rem"></i>
+          Placement Statistics
+        </h3>
+    
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Placement Rate -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: rgba(99, 102, 241, 0.05); border-radius: 16px; border: 1px solid rgba(99, 102, 241, 0.1);">
+              <div>
+                  <h4 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Placement Rate</h4>
+                  <p style="color: var(--primary); font-size: 1.75rem; font-weight: 800; line-height: 1;">85%</p>
+              </div>
+              <div style="width: 48px; height: 48px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.5rem;">
+                  <i class="ph-fill ph-trend-up"></i>
+              </div>
+          </div>
+    
+          <!-- Avg Package -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: rgba(6, 182, 212, 0.05); border-radius: 16px; border: 1px solid rgba(6, 182, 212, 0.1);">
+              <div>
+                  <h4 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Average Package</h4>
+                  <p style="color: var(--secondary); font-size: 1.75rem; font-weight: 800; line-height: 1;">12.5 LPA</p>
+              </div>
+              <div style="width: 48px; height: 48px; background: rgba(6, 182, 212, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 1.5rem;">
+                  <i class="ph-fill ph-currency-inr"></i>
+              </div>
+          </div>
 
-      <div
-        style="
-          text-align: center;
-          padding: 1.5rem;
-          background: rgba(6, 182, 212, 0.05);
-          border-radius: 12px;
-        "
-      >
-        <h4
-          style="
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-          "
-        >
-          Average Package
-        </h4>
-        <p style="color: #06b6d4; font-size: 2.5rem; font-weight: 700">
-          12.5 LPA
-        </p>
-        <p style="color: #10b981; font-size: 0.8rem; margin-top: 0.5rem">
-          <i class="ph ph-arrow-up"></i> Up from last year
-        </p>
-      </div>
-
-      <div
-        style="
-          text-align: center;
-          padding: 1.5rem;
-          background: rgba(244, 63, 94, 0.05);
-          border-radius: 12px;
-        "
-      >
-        <h4
-          style="
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-          "
-        >
-          Companies Hiring
-        </h4>
-        <p style="color: #f43f5e; font-size: 2.5rem; font-weight: 700">
-          {{ stats.total_jobs }}
-        </p>
-        <p style="color: #f43f5e; font-size: 0.8rem; margin-top: 0.5rem">
-          <i class="ph ph-info"></i> Active drives
-        </p>
-      </div>
+          <!-- Companies Hiring -->
+           <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: rgba(244, 63, 94, 0.05); border-radius: 16px; border: 1px solid rgba(244, 63, 94, 0.1);">
+              <div>
+                  <h4 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Active Drives</h4>
+                  <p style="color: var(--accent); font-size: 1.75rem; font-weight: 800; line-height: 1;">{{ stats.total_jobs }}</p>
+              </div>
+              <div style="width: 48px; height: 48px; background: rgba(244, 63, 94, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.5rem;">
+                  <i class="ph-fill ph-buildings"></i>
+              </div>
+          </div>
+        </div>
     </div>
   </div>
 </div>
+
+<script id="dashboard-chart-data" type="application/json">
+    {{ chart_data | tojson | safe }}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('applicationChart').getContext('2d');
+        const chartData = JSON.parse(document.getElementById('dashboard-chart-data').textContent);
+        
+        // Define theme colors
+        const colors = {
+            'Applied': '#3b82f6',    // Blue
+            'Shortlisted': '#eab308', // Yellow
+            'Selected': '#22c55e',    // Green
+            'Rejected': '#ef4444'     // Red
+        };
+
+        const dataValues = [
+            chartData['Applied'] || 0,
+            chartData['Shortlisted'] || 0,
+            chartData['Selected'] || 0,
+            chartData['Rejected'] || 0
+        ];
+        
+        // Check if all zero
+        const total = dataValues.reduce((a, b) => a + b, 0);
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Applied', 'Shortlisted', 'Selected', 'Rejected'],
+                datasets: [{
+                    data: total > 0 ? dataValues : [1], // Show dummy ring if empty
+                    backgroundColor: total > 0 ? [
+                        colors['Applied'],
+                        colors['Shortlisted'],
+                        colors['Selected'],
+                        colors['Rejected']
+                    ] : ['rgba(148, 163, 184, 0.2)'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                family: "'Outfit', sans-serif",
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: total > 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: { family: "'Outfit', sans-serif" },
+                        bodyFont: { family: "'Outfit', sans-serif" }
+                    }
+                }
+            }
+        });
+    });
+</script>
 
   <style>
   @media (max-width: 768px) {

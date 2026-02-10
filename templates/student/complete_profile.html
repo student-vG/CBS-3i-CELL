@@ -2,9 +2,12 @@
 School{% endblock %} {% block content %}
 <div
   class="auth-container lg glass-card"
-  style="margin-top: 2rem; max-width: 900px"
+  style="margin-top: 2rem; width: 100%; padding: 2rem"
 >
-  <div style="text-align: center; margin-bottom: 2rem">
+  <div
+    class="auth-container-child1"
+    style="text-align: center; margin-bottom: 2rem"
+  >
     <h2 style="color: var(--primary)">Complete Your Profile</h2>
     <p class="text-muted">
       Please fill in all details accurately. This data will be used for
@@ -394,7 +397,7 @@ School{% endblock %} {% block content %}
       </div>
     </div>
 
-    <div class="form-actions" style="margin-top: 2rem; display: flex; justify-content: flex-end; flex-wrap: wrap;">
+    <div class="form-actions">
       <button
         type="submit"
         class="btn-primary"
@@ -407,82 +410,166 @@ School{% endblock %} {% block content %}
 </div>
 
 <style>
+  /* Local overrides & specific styles for Profile Completion */
+
   .section-title {
     margin-top: 2.5rem;
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.8rem;
     border-bottom: 2px solid var(--border);
     color: var(--primary);
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    position: relative;
+  }
+
+  .section-title::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  .section-title i {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.4rem;
+    border-radius: 8px;
+    font-size: 1.2rem;
   }
 
   .sub-title {
     color: var(--text-muted);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.8rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
+  .sub-title::before {
+    content: "";
+    display: block;
+    width: 4px;
+    height: 16px;
+    background: var(--secondary);
+    border-radius: 2px;
+  }
+
+  /* Grid Layouts */
   .grid-2-col {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
+
   .grid-3-col {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
   }
+
   .grid-4-col {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* Input Styling */
+  .input-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .input-group label {
-    display: block;
-    margin-bottom: 0.5rem;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    display: flex;
+    justify-content: space-between;
   }
 
   .form-control {
     width: 100%;
-    padding: 0.8rem;
-    border: 1px solid var(--border);
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-strong);
     background: var(--surface-input);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-main);
+    font-size: 0.95rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .form-control:hover {
+    border-color: var(--primary-light);
+    background: var(--surface);
   }
 
   .form-control:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    transform: translateY(-1px);
   }
 
+  /* Textarea adjustment */
+  textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  /* File Upload Area */
   .file-drop-area {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem;
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    background: var(--surface-light);
-    transition: 0.2s;
+    justify-content: center;
+    padding: 2.5rem;
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
     cursor: pointer;
+    text-align: center;
+    gap: 0.75rem;
+    overflow: hidden;
   }
 
   .file-drop-area:hover {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(99, 102, 241, 0.08);
+    transform: scale(1.01);
+  }
+
+  .file-drop-area i {
+    font-size: 2.5rem;
+    color: var(--text-muted);
+    transition: 0.3s;
+  }
+
+  .file-drop-area:hover i {
+    color: var(--primary);
+    transform: translateY(-5px);
+  }
+
+  .file-drop-area span {
+    font-weight: 500;
+    color: var(--text-muted);
   }
 
   .file-drop-area input {
@@ -493,11 +580,13 @@ School{% endblock %} {% block content %}
     height: 100%;
     opacity: 0;
     cursor: pointer;
+    z-index: 10;
   }
 
+  /* Mobile Responsiveness */
   @media (max-width: 900px) {
     .grid-4-col {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -507,9 +596,36 @@ School{% endblock %} {% block content %}
     .grid-4-col {
       grid-template-columns: 1fr;
     }
+
     .auth-container {
       padding: 1.5rem;
+      margin-top: 1rem !important;
     }
+
+    .section-title {
+      font-size: 1.2rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .section-title i {
+      display: inline-block;
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+  }
+
+  /* Dark mode specific adjustments if needed, 
+     though vars handle most */
+  [data-theme="dark"] .file-drop-area {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  [data-theme="dark"] .file-drop-area:hover {
+    background: rgba(99, 102, 241, 0.1);
   }
 </style>
 {% endblock %}

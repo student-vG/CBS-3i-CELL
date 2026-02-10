@@ -4,99 +4,59 @@
   font-size: 0.95rem;
   color: var(--text-muted);
   font-weight: 500;
-  margin-top: 0.1em;
   margin-left: 0;
   text-align: left;
   max-width: 90vw;
-  white-space: normal;
-  word-break: break-word;
 }
 
 /* Navbar Specific Overrides for Mobile */
-@media (max-width: 768px) {
-  /* Prevent full-width buttons in navbar */
-  .navbar .btn-secondary,
-  .navbar .theme-toggle-btn {
-    width: auto !important;
-    margin-bottom: 0 !important;
-    display: inline-flex !important;
-  }
-  
-  /* Force single line flex for navbar */
-  .navbar {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
-  }
-}
-
-/* Mobile Menu Overlay */
-/* Improved Mobile Top Nav */
 @media (max-width: 992px) {
+  /* Clean up top navbar for mobile */
   .navbar {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
     padding: 0.75rem 1rem !important;
-    gap: 0.5rem;
+    height: 60px; /* Smaller height for mobile top bar */
+    justify-content: space-between;
   }
-  
-  .logo img {
-    height: 32px !important;
-  }
-  
-  .logo span {
-    font-size: 1.1rem;
-  }
-  
-  /* Strictly hide subtitle on mobile for single line effect */
+
+  .nav-links.desktop-only,
+  .btn-secondary.desktop-only,
   .logo-subtitle {
     display: none !important;
   }
-  
-  .nav-links {
-    display: none !important;
-  }
-}
-  
-/* Mobile Nav Control Tweaks */
-@media (max-width: 768px) {
-  .logout-text {
-    display: none;
-  }
-  
-  .btn-logout-top {
-    padding: 0.5rem !important;
-    background: transparent !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border);
-  }
-  
-  .btn-logout-top:hover {
-    background: var(--surface-hover) !important;
-    color: var(--danger) !important;
-  }
-  
-  .btn-logout-top i {
-    font-size: 1.25rem;
-  }
-}
 
-/* Ensure Navbar items align properly */
-.navbar {
-  justify-content: space-between;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap ;
+  /* Adjust logo for mobile */
+  .logo-img {
+    height: 32px !important;
+  }
+
+  .logo-main {
+    font-size: 1.1rem !important;
+  }
+
+  /* Hide notification bell in top bar if we want to save space, 
+     but keeping it is good. Adjust spacing. */
+  .nav-controls {
+    gap: 0.5rem;
+  }
+
+  .btn-icon-nav {
+    font-size: 1.3rem;
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* Mobile Bottom Navigation Bar Styles */
-/* Force layout stability */
 @media (max-width: 992px) {
   body {
-    padding-bottom: 80px;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    padding-bottom: 85px !important;
+    padding-bottom: calc(85px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }
 
@@ -105,32 +65,39 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px; /* Fixed height to prevent jumping */
+  height: 75px;
   background: var(--surface-solid);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border-strong);
-  z-index: 1000;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-  display: none;
+  border-top: 1px solid var(--border);
+  z-index: 9999;
   padding-bottom: env(safe-area-inset-bottom);
-  box-sizing: content-box; /* Height + padding */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
 }
 
-@media (max-width: 992px) {
-  .mobile-bottom-nav {
-    display: flex;
-    justify-content: center;
-  }
-  /* Navbar is now handled by style.css to show Logo + Toggle only */
+/* Add a blur specifically for supported devices if needed, 
+   but solid is safer for content visibility behind it. 
+   Let's try a very heavy blur. */
+.mobile-bottom-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+[data-theme="dark"] .mobile-bottom-nav {
+  background: rgba(30, 41, 59, 0.95);
 }
 
 .mobile-nav-container {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
   width: 100%;
-  max-width: 600px;
+  max-width: 500px;
   height: 100%;
+  margin: 0 auto;
+  padding: 0 8px;
 }
 
 .mobile-nav-item {
@@ -139,50 +106,57 @@
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-width: 50px;
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 10px;
+  font-size: 0.7rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: visible;
+  padding: 8px 4px;
+  border-radius: 12px;
 }
 
 .mobile-nav-item i {
-  font-size: 1.5rem;
-  margin-bottom: 2px;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
 }
 
-.mobile-nav-item:hover,
+.mobile-nav-item:hover {
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.1);
+}
+
 .mobile-nav-item.active {
   color: var(--primary);
 }
 
 .mobile-nav-item.active i {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   color: var(--primary);
 }
 
 /* Center Dashboard Button - Premium Floating Style */
 .mobile-nav-item.center-item {
   position: relative;
+  transform: translateY(-20px);
 }
 
 .mobile-nav-item.center-item i {
   position: absolute;
-  top: -24px;
-  width: 52px;
-  height: 52px;
+  top: -30px;
+  width: 56px;
+  height: 56px;
   background: var(--gradient);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white !important;
-  border: 4px solid var(--surface-solid); /* Cutout effect matches nav bg */
-  box-shadow: 0 8px 15px rgba(99, 102, 241, 0.35);
-  font-size: 1.4rem;
+  border: 4px solid var(--surface-solid);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  font-size: 1.5rem;
   margin: 0;
   z-index: 10;
 }
@@ -193,13 +167,18 @@
 }
 
 .mobile-nav-item.center-item span {
-  margin-top: 26px; /* Push text down below the floating button */
+  margin-top: 28px;
   font-weight: 700;
+  font-size: 0.7rem;
 }
 
 .mobile-nav-item.center-item:hover i {
-  transform: scale(1.1) rotate(-5deg);
-  box-shadow: 0 12px 25px rgba(99, 102, 241, 0.5);
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
+}
+
+.mobile-nav-item.center-item.active i {
+  transform: scale(1.05);
 }
 
 /* Animated Background */
@@ -463,7 +442,9 @@ html {
   }
 
   body {
-    padding-bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+    padding-bottom: calc(
+      75px + max(0px, env(safe-area-inset-bottom))
+    ) !important;
   }
 }
 
