@@ -6,6 +6,7 @@
     <h2 class="mb-4" style="color: var(--primary);">Edit Form</h2>
     
     <form action="{{ url_for('dynamic_forms.edit_form', form_id=form._id) }}" method="POST" id="editForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="form-group mb-4">
         <label class="form-label">Form Title</label>
         <input type="text" name="title" class="form-control" required value="{{ form.title }}">

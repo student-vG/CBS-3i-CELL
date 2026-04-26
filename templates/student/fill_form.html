@@ -12,6 +12,7 @@
     <p class="text-center text-muted mb-4">{{ form.description }}</p>
     
     <form action="{{ url_for('dynamic_forms.fill_form', form_id=form._id) }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       {% for field in form.fields %}
       <div class="form-group mb-4">
         <label class="form-label">{{ field.label }}</label>

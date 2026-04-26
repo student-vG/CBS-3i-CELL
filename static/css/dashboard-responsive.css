@@ -724,26 +724,28 @@ svg {
     border: none;
     border-bottom: 1px solid #eee;
     position: relative;
-    padding-left: 50% !important;
-    padding-right: 0 !important;
+    padding-left: 45% !important;
+    padding-right: 0.5rem !important;
     padding-top: 0.75rem !important;
     padding-bottom: 0.75rem !important;
     text-align: right;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100% !important; /* Fix width issues */
-    box-sizing: border-box; /* Ensure padding is included */
+    display: block; /* Removed flex to fix squishing */
+    width: 100% !important;
+    box-sizing: border-box;
+    word-wrap: break-word; /* Ensure long emails wrap */
   }
 
   .data-table td:before {
     /* Now like a table header */
     content: attr(data-label);
+    position: absolute;
+    left: 0.5rem;
+    top: 0.75rem;
+    width: 40%;
     font-weight: 600;
     color: var(--text-muted);
     text-align: left;
-    flex: 1;
-    margin-right: 1rem;
+    white-space: normal; /* Allow label to wrap if needed */
   }
 
   .data-table td:last-child {

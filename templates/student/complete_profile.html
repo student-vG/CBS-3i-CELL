@@ -20,6 +20,7 @@ School{% endblock %} {% block content %}
     method="POST"
     enctype="multipart/form-data"
   >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <!-- SECTION 1: Personal Details -->
     <h3 class="section-title">
       <i class="ph-bold ph-user"></i> 1. Personal Details
@@ -628,4 +629,110 @@ School{% endblock %} {% block content %}
     background: rgba(99, 102, 241, 0.1);
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    {% if student %}
+      const student = {
+        name: {{ student.get('name', '') | tojson | safe }},
+        gender: {{ student.get('gender', '') | tojson | safe }},
+        dob: {{ student.get('dob', '') | tojson | safe }},
+        phone: {{ student.get('phone', '') | tojson | safe }},
+        alt_phone: {{ student.get('alt_phone', '') | tojson | safe }},
+        personal_email: {{ student.get('personal_email', '') | tojson | safe }},
+        nationality: {{ student.get('nationality', 'Indian') | tojson | safe }},
+        marital_status: {{ student.get('marital_status', '') | tojson | safe }},
+        aadhaar: {{ student.get('aadhaar', '') | tojson | safe }},
+        pan: {{ student.get('pan', '') | tojson | safe }},
+        address: {
+          permanent: {{ student.get('address', {}).get('permanent', '') | tojson | safe }},
+          current: {{ student.get('address', {}).get('current', '') | tojson | safe }}
+        },
+        academic: {
+          tenth: {
+            school: {{ student.get('academic', {}).get('tenth', {}).get('school', '') | tojson | safe }},
+            board: {{ student.get('academic', {}).get('tenth', {}).get('board', '') | tojson | safe }},
+            year: {{ student.get('academic', {}).get('tenth', {}).get('year', '') | tojson | safe }},
+            score: {{ student.get('academic', {}).get('tenth', {}).get('score', '') | tojson | safe }}
+          },
+          twelfth: {
+            school: {{ student.get('academic', {}).get('twelfth', {}).get('school', '') | tojson | safe }},
+            board: {{ student.get('academic', {}).get('twelfth', {}).get('board', '') | tojson | safe }},
+            year: {{ student.get('academic', {}).get('twelfth', {}).get('year', '') | tojson | safe }},
+            score: {{ student.get('academic', {}).get('twelfth', {}).get('score', '') | tojson | safe }},
+            stream: {{ student.get('academic', {}).get('twelfth', {}).get('stream', '') | tojson | safe }}
+          },
+          ug: {
+            college: {{ student.get('academic', {}).get('ug', {}).get('college', '') | tojson | safe }},
+            university: {{ student.get('academic', {}).get('ug', {}).get('university', '') | tojson | safe }},
+            degree: {{ student.get('academic', {}).get('ug', {}).get('degree', '') | tojson | safe }},
+            branch: {{ student.get('academic', {}).get('ug', {}).get('branch', '') | tojson | safe }},
+            year: {{ student.get('academic', {}).get('ug', {}).get('year', '') | tojson | safe }},
+            score: {{ student.get('academic', {}).get('ug', {}).get('score', '') | tojson | safe }},
+            backlogs: {{ student.get('academic', {}).get('ug', {}).get('backlogs', 0) | tojson | safe }},
+            backlog_status: {{ student.get('academic', {}).get('ug', {}).get('backlog_status', '') | tojson | safe }}
+          },
+          pg: {
+            college: {{ student.get('academic', {}).get('pg', {}).get('college', '') | tojson | safe }},
+            university: {{ student.get('academic', {}).get('pg', {}).get('university', '') | tojson | safe }},
+            degree: {{ student.get('academic', {}).get('pg', {}).get('degree', '') | tojson | safe }},
+            branch: {{ student.get('academic', {}).get('pg', {}).get('branch', '') | tojson | safe }},
+            year: {{ student.get('academic', {}).get('pg', {}).get('year', '') | tojson | safe }},
+            score: {{ student.get('academic', {}).get('pg', {}).get('score', '') | tojson | safe }},
+            backlogs: {{ student.get('academic', {}).get('pg', {}).get('backlogs', 0) | tojson | safe }},
+            backlog_status: {{ student.get('academic', {}).get('pg', {}).get('backlog_status', '') | tojson | safe }}
+          }
+        },
+        skills: {{ (student.get('skills', []) | join(', ')) | tojson | safe }},
+        projects: {{ student.get('projects', '') | tojson | safe }},
+        has_resume: {{ 'true' if (student.get('resume_file_id') or student.get('resume_path')) else 'false' }}
+      };
+
+      const baseFields = ['name', 'gender', 'dob', 'phone', 'alt_phone', 'personal_email', 'nationality', 'marital_status', 'aadhaar', 'pan', 'skills', 'projects'];
+      baseFields.forEach(field => {
+        const input = document.querySelector(`[name="${field}"]`);
+        if (input && student[field] !== null && student[field] !== '') {
+          input.value = student[field];
+        }
+      });
+
+      if (student.address.permanent) {
+        const p = document.querySelector('[name="permanent_address"]');
+        if (p) p.value = student.address.permanent;
+      }
+      if (student.address.current) {
+        const c = document.querySelector('[name="current_address"]');
+        if (c) c.value = student.address.current;
+      }
+
+      ['tenth', 'twelfth', 'ug', 'pg'].forEach(level => {
+        Object.keys(student.academic[level]).forEach(key => {
+          const val = student.academic[level][key];
+          if (val !== null && val !== '') {
+            const input = document.querySelector(`[name="${level}_${key}"]`);
+            if (input) input.value = val;
+          }
+        });
+      });
+
+      if (student.name) {
+        const title = document.querySelector('.auth-container-child1 h2');
+        const desc = document.querySelector('.auth-container-child1 p');
+        const btn = document.querySelector('.form-actions button');
+        
+        if (title) title.innerText = 'Edit Your Profile';
+        if (desc) desc.innerText = 'Update your details below. Changes will be pending admin approval.';
+        if (btn) btn.innerHTML = 'Save Changes <i class="ph-bold ph-floppy-disk"></i>';
+      }
+
+      if (student.has_resume) {
+        const rInput = document.querySelector('[name="resume"]');
+        const rText = document.querySelector('.file-drop-area span');
+        if (rInput) rInput.removeAttribute('required');
+        if (rText) rText.innerHTML = 'Drag & Drop to Update Resume<br><small style="color:var(--primary)">(Currently uploaded)</small>';
+      }
+    {% endif %}
+  });
+</script>
+
 {% endblock %}

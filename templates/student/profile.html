@@ -1,216 +1,253 @@
-{% extends 'base.html' %} {% block title %}My Profile - CBS 3i-cell{%
-endblock %} {% block content %}
-<div class="auth-container lg glass-card" style="margin-top: 2rem">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    "
-  >
-    <div>
-      <h2>
-        <i
-          class="ph-bold ph-user-circle"
-          style="color: var(--primary); margin-right: 0.5rem"
-        ></i
-        >My Profile
-      </h2>
-      <p class="text-muted">Manage your personal and academic information.</p>
+{% extends 'base.html' %} 
+{% block title %}My Profile - CBS 3i-cell{% endblock %} 
+
+{% block content %}
+<div class="profile-container" style="margin-top: 2rem; max-width: 1000px; margin-left: auto; margin-right: auto;">
+  
+  <!-- Profile Header Card -->
+  <div class="glass-card profile-header-card" style="padding: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <div class="avatar" style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; font-weight: 700; box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);">
+        {{ student.name[0]|upper if student.name else 'S' }}
+      </div>
+      <div>
+        <h1 style="margin: 0; font-size: 1.8rem; color: var(--text-main);">{{ student.name or 'Student Name' }}</h1>
+        <p style="margin: 0.25rem 0 0.75rem 0; color: var(--text-muted); font-size: 1rem;">{{ student.student_id or 'CBS ID Not Assigned' }}</p>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">{{ student.branch or 'Branch N/A' }}</span>
+          <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600;">{{ student.cgpa or '0.0' }} CGPA</span>
+        </div>
+      </div>
     </div>
-    <a href="{{ url_for('student_dashboard') }}" class="btn-secondary"
-      ><i class="ph ph-arrow-left"></i> Dashboard</a
-    >
+    <div class="profile-actions" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+      <a href="{{ url_for('student_dashboard') }}" class="btn btn-cancel" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+        <i class="ph ph-arrow-left"></i> Back to Dashboard
+      </a>
+      <a href="{{ url_for('complete_profile') }}" class="btn btn-edit" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+        <i class="ph ph-pencil-simple"></i> Edit Profile
+      </a>
+    </div>
   </div>
 
-  <div
-    class="profile-layout"
-    style="display: flex; gap: 3rem; align-items: start"
-  >
-    <div class="user-info-section" style="text-align: center; flex-shrink: 0">
-      <div
-        class="avatar-placeholder"
-        style="width: 150px; height: 150px; font-size: 4rem"
-      >
-        {{ student.name[0] }}
-      </div>
-      <h2 style="margin-bottom: 0.5rem" class="mobile-text-lg">
-        {{ student.name }}
-      </h2>
-      <p class="text-muted">{{ student.branch }}</p>
-      <div class="badge" style="margin-top: 1rem; padding: 0.5rem 1rem">
-        {{ student.cgpa }} CGPA
-      </div>
-    </div>
-
-    <div style="flex: 1; width: 100%">
-      <h3
-        style="
-          border-bottom: 1px solid var(--border-dark);
-          padding-bottom: 0.5rem;
-          margin-bottom: 1.5rem;
-        "
-      >
-        Academic Details
-      </h3>
-
-      <div
-        class="details-grid"
-        style="
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem;
-          margin-bottom: 2rem;
-        "
-      >
-        <div>
-          <label
-            class="text-muted"
-            style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem"
-            >Email Address</label
-          >
-          <div style="font-weight: 500">{{ session.email }}</div>
-        </div>
-        <div>
-          <label
-            class="text-muted"
-            style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem"
-            >Branch</label
-          >
-          <div style="font-weight: 500">{{ student.branch }}</div>
-        </div>
-      </div>
-
-      <h3
-        style="
-          border-bottom: 1px solid var(--border-dark);
-          padding-bottom: 0.5rem;
-          margin-bottom: 1.5rem;
-        "
-      >
-        Resume Management
-      </h3>
-      <div
-        style="
-          background: var(--surface-light);
-          padding: 1.5rem;
-          border-radius: var(--radius);
-          border: 1px dashed var(--border-dark);
-        "
-      >
-        <div
-          class="resume-header"
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <div>
-            <div style="font-weight: 600">Current Resume</div>
-            <div
-              style="
-                font-size: 0.8rem;
-                color: var(--text-muted);
-                word-break: break-all;
-              "
-            >
-              {{ student.resume_path or 'No resume uploaded' }}
+  <div class="profile-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    
+    <!-- Left Column (Main Info) -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      
+      <!-- Academic History -->
+      <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-fill ph-graduation-cap" style="color: var(--primary);"></i> Academic History
+        </h3>
+        
+        {% if student.academic %}
+          <div class="academic-timeline" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            {% if student.academic.pg and student.academic.pg.degree %}
+            <div class="academic-item">
+              <div style="font-weight: 700; color: var(--text-main);">Post Graduation ({{ student.academic.pg.degree }})</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">{{ student.academic.pg.college }} - {{ student.academic.pg.university }}</div>
+              <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                <span style="font-weight: 600;">Branch:</span> {{ student.academic.pg.branch }} | 
+                <span style="font-weight: 600;">Score:</span> {{ student.academic.pg.score }} | 
+                <span style="font-weight: 600;">Year:</span> {{ student.academic.pg.year }}
+              </div>
             </div>
+            {% endif %}
+
+            {% if student.academic.ug and student.academic.ug.degree %}
+            <div class="academic-item">
+              <div style="font-weight: 700; color: var(--text-main);">Under Graduation ({{ student.academic.ug.degree }})</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">{{ student.academic.ug.college }} - {{ student.academic.ug.university }}</div>
+              <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                <span style="font-weight: 600;">Branch:</span> {{ student.academic.ug.branch }} | 
+                <span style="font-weight: 600;">Score:</span> {{ student.academic.ug.score }} | 
+                <span style="font-weight: 600;">Year:</span> {{ student.academic.ug.year }}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if student.academic.twelfth and student.academic.twelfth.board %}
+            <div class="academic-item">
+              <div style="font-weight: 700; color: var(--text-main);">Class 12th ({{ student.academic.twelfth.stream }})</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">{{ student.academic.twelfth.school }} - {{ student.academic.twelfth.board }}</div>
+              <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                <span style="font-weight: 600;">Score:</span> {{ student.academic.twelfth.score }}% | 
+                <span style="font-weight: 600;">Year:</span> {{ student.academic.twelfth.year }}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if student.academic.tenth and student.academic.tenth.board %}
+            <div class="academic-item">
+              <div style="font-weight: 700; color: var(--text-main);">Class 10th</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">{{ student.academic.tenth.school }} - {{ student.academic.tenth.board }}</div>
+              <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                <span style="font-weight: 600;">Score:</span> {{ student.academic.tenth.score }}% | 
+                <span style="font-weight: 600;">Year:</span> {{ student.academic.tenth.year }}
+              </div>
+            </div>
+            {% endif %}
+
           </div>
-          {% if student.resume_path %}
-          <a
-            href="{{ url_for('static', filename='uploads/' + student.resume_path) }}"
-            target="_blank"
-            class="btn-primary btn-sm"
-          >
-            <i class="ph ph-eye"></i> View Resume
-          </a>
+        {% else %}
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Academic details not provided yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Skills & Projects -->
+      <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-fill ph-code" style="color: var(--primary);"></i> Skills & Projects
+        </h3>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Technical Skills</h4>
+          {% if student.skills %}
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+              {% for skill in student.skills %}
+                {% if skill.strip() %}
+                  <span style="background: #ffffff; border: 1px solid var(--border); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500;">{{ skill.strip() }}</span>
+                {% endif %}
+              {% endfor %}
+            </div>
           {% else %}
-          <button
-            class="btn-secondary btn-sm"
-            disabled
-            style="opacity: 0.6; cursor: not-allowed"
-          >
-            <i class="ph ph-warning"></i> No Resume
-          </button>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">No skills listed.</p>
           {% endif %}
         </div>
 
-        <hr
-          style="
-            margin: 1.5rem 0;
-            border: 0;
-            border-top: 1px solid var(--border-dark);
-          "
-        />
+        <div>
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Projects & Links</h4>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; white-space: pre-wrap;">{{ student.projects or 'No projects provided.' }}</p>
+        </div>
+      </div>
 
-        <form
-          action="{{ url_for('update_resume') }}"
-          method="POST"
-          enctype="multipart/form-data"
-        >
-          <label style="font-weight: 500; display: block; margin-bottom: 1rem"
-            >Update Resume (PDF only)</label
-          >
-          <div class="file-action-group" style="display: flex; gap: 1rem">
-            <input
-              type="file"
-              name="resume"
-              accept=".pdf"
-              class="form-control"
-              required
-              style="padding: 0.5rem"
-            />
-            <button type="submit" class="btn-primary">Update</button>
-          </div>
+    </div>
+
+    <!-- Right Column (Sidebar) -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      
+      <!-- Resume Management -->
+      <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-fill ph-file-pdf" style="color: var(--accent);"></i> Resume
+        </h3>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          {% if student.resume_file_id or student.resume_path %}
+            <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 0.5rem; display: block;"></i>
+            <p style="margin: 0 0 1rem 0; font-weight: 600;">Resume Uploaded</p>
+            {% if student.resume_file_id %}
+            <a href="{{ url_for('file_serving.serve_file', file_id=student.resume_file_id) }}" target="_blank" class="btn btn-primary" style="width: 100%;">
+              <i class="ph ph-eye"></i> View Resume
+            </a>
+            {% elif student.resume_path %}
+            <a href="{{ url_for('static', filename='uploads/' + student.resume_path) }}" target="_blank" class="btn btn-primary" style="width: 100%;">
+              <i class="ph ph-eye"></i> View Resume
+            </a>
+            {% endif %}
+          {% else %}
+            <i class="ph-fill ph-warning-circle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 0.5rem; display: block;"></i>
+            <p style="margin: 0 0 1rem 0; font-weight: 600; color: #f59e0b;">No Resume Found</p>
+            <button class="btn btn-secondary" disabled style="width: 100%; opacity: 0.5;">
+              <i class="ph ph-eye-slash"></i> View Resume
+            </button>
+          {% endif %}
+        </div>
+
+        <form action="{{ url_for('student_dashboard') }}" method="GET" style="margin-top: 1rem;">
+          <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem;">To update your resume, click 'Edit Profile' above.</p>
         </form>
       </div>
+
+      <!-- Contact Info -->
+      <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-fill ph-address-book" style="color: var(--secondary);"></i> Contact Details
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">System Email</div>
+            <div style="font-weight: 500; word-break: break-all;">{{ session.email }}</div>
+          </div>
+          {% if student.personal_email %}
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Personal Email</div>
+            <div style="font-weight: 500; word-break: break-all;">{{ student.personal_email }}</div>
+          </div>
+          {% endif %}
+          {% if student.phone %}
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Phone Number</div>
+            <div style="font-weight: 500;">{{ student.phone }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="ph-fill ph-user-list" style="color: var(--primary);"></i> Personal Info
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% if student.dob %}
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Date of Birth</div>
+            <div style="font-weight: 500;">{{ student.dob }}</div>
+          </div>
+          {% endif %}
+          {% if student.gender %}
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Gender</div>
+            <div style="font-weight: 500; text-transform: capitalize;">{{ student.gender }}</div>
+          </div>
+          {% endif %}
+          {% if student.address and student.address.current %}
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">Current Address</div>
+            <div style="font-weight: 500; font-size: 0.9rem;">{{ student.address.current }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <style>
-  /* Responsive Mobile Styles */
+  .academic-item {
+    padding-left: 1rem;
+    border-left: 3px solid rgba(99, 102, 241, 0.3);
+    position: relative;
+  }
+  .academic-item::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 5px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
   @media (max-width: 768px) {
-    .profile-layout {
-      flex-direction: column !important;
-      align-items: center !important;
-      gap: 1.5rem !important;
+    .profile-grid {
+      grid-template-columns: 1fr !important;
     }
-
-    .user-info-section {
-      width: 100%;
-      display: flex;
+    .profile-header-card {
       flex-direction: column;
       align-items: center;
-      border-bottom: 1px solid var(--border-dark);
-      padding-bottom: 1.5rem;
-    }
-
-    .details-grid {
-      grid-template-columns: 1fr !important;
-      gap: 1rem !important;
-    }
-
-    .resume-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start !important;
-    }
-
-    .resume-header .btn-primary {
-      width: 100%;
       text-align: center;
-      justify-content: center;
     }
-
-    .file-action-group {
-      flex-direction: column;
+    .profile-actions {
+      align-items: center !important;
+      width: 100%;
     }
-
-    .file-action-group button {
+    .profile-actions .btn {
       width: 100%;
     }
   }

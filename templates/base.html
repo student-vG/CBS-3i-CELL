@@ -38,8 +38,31 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/dashboard-responsive.css') }}"
     />
-    <!-- Phosphor Icons for premium icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Phosphor Icons (weights used across the app) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css"
+      crossorigin="anonymous"
+      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/regular/style.css';"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
+      crossorigin="anonymous"
+      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css';"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css"
+      crossorigin="anonymous"
+      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/fill/style.css';"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/duotone/style.css"
+      crossorigin="anonymous"
+      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/duotone/style.css';"
+    />
     <script
       src="{{ url_for('static', filename='js/offline-notifications.js') }}"
       defer
@@ -47,13 +70,7 @@
     <script>
       // Apply theme immediately to prevent flash
       (function () {
-        const savedTheme = localStorage.getItem("theme");
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
-        const theme = savedTheme || systemTheme;
-        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.setAttribute("data-theme", "light");
       })();
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
@@ -75,13 +92,6 @@
           Placement<span class="highlight">Cell</span>
         </span>
       </a>
-      <button
-        class="theme-toggle-btn absolute-right"
-        onclick="toggleTheme()"
-        aria-label="Toggle Dark Mode"
-      >
-        <i class="ph-fill ph-sun" id="theme-icon"></i>
-      </button>
     </nav>
     {% else %}
     <!-- Full Navbar -->
@@ -153,7 +163,7 @@
         >
         {% endif %} {% else %}
         <a href="{{ url_for('login') }}" class="nav-link">Login</a>
-        <a href="{{ url_for('signup') }}" class="btn btn-sm btn-primary"
+        <a href="{{ url_for('signup') }}" class="btn btn-sm btn-submit"
           >Student Signup</a
         >
         {% endif %}
@@ -161,14 +171,6 @@
 
       <!-- Nav Controls -->
       <div class="nav-controls">
-        <button
-          class="theme-toggle-btn"
-          onclick="toggleTheme()"
-          aria-label="Toggle Dark Mode"
-        >
-          <i class="ph-fill ph-moon"></i>
-        </button>
-
         {% if session.get('user_id') %}
         <!-- Notification Bell -->
         <a
@@ -280,8 +282,8 @@
         <h3>Confirm Logout</h3>
         <p>Are you sure you want to log out of your session?</p>
         <div class="modal-actions">
-          <button onclick="confirmLogout()" class="btn-primary">Logout</button>
-          <button onclick="closeLogoutModal()" class="btn-secondary">
+          <button onclick="confirmLogout()" class="btn btn-delete">Logout</button>
+          <button onclick="closeLogoutModal()" class="btn btn-cancel">
             Cancel
           </button>
         </div>
@@ -297,12 +299,24 @@
         fetch('/api/notifications/check?last_check=' + encodeURIComponent(lastCheckTime))
           .then(response => response.json())
           .then(data => {
-            if (data.new_count > 0) {
-              // Update notification badge
-              const badge = document.querySelector('.notif-badge');
-              if (badge) {
-                badge.textContent = data.new_count < 10 ? data.new_count : '9+';
-                badge.style.display = 'flex';
+            if (data.new_count !== undefined) {
+              const btn = document.querySelector('a[aria-label="Notifications"]');
+              let badge = document.querySelector('.notif-badge');
+              
+              if (data.new_count > 0) {
+                if (!badge && btn) {
+                  // Create badge if not exists
+                  badge = document.createElement('span');
+                  badge.className = 'notif-badge';
+                  btn.appendChild(badge);
+                }
+                
+                if (badge) {
+                  badge.textContent = data.new_count < 10 ? data.new_count : '9+';
+                  badge.style.display = 'flex';
+                }
+              } else if (badge) {
+                badge.style.display = 'none';
               }
             }
           })
@@ -536,22 +550,8 @@
           true,
         );
 
-        // Simple devtools detection (best-effort only)
-        let flagged = false;
-        setInterval(() => {
-          const open =
-            window.outerWidth - window.innerWidth > 160 ||
-            window.outerHeight - window.innerHeight > 160;
-          if (open && !flagged) {
-            flagged = true;
-            showPopup("Developer tools detected.");
-            // Optional: add page blur
-            document.body.style.filter = "blur(3px)";
-          } else if (!open && flagged) {
-            flagged = false;
-            document.body.style.filter = "";
-          }
-        }, 1000);
+        // Simple devtools detection removed as it causes issues on mobile
+        // The blur effect was triggering falsely due to viewport size differences.
       })();
     </script>
 
@@ -583,50 +583,22 @@
         }
       }
 
-      // Theme Toggle Logic
-      function toggleTheme() {
-        const currentTheme =
-          document.documentElement.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-
-        updateThemeIcon(newTheme);
-      }
-
-      function updateThemeIcon(theme) {
-        const btns = document.querySelectorAll(".theme-toggle-btn i");
-        btns.forEach((icon) => {
-          // Reset animation
-          icon.classList.remove("theme-icon-enter");
-          void icon.offsetWidth; // trigger reflow
-
-          if (theme === "dark") {
-            icon.className = "ph-fill ph-sun theme-icon-enter";
-          } else {
-            icon.className = "ph-fill ph-moon theme-icon-enter";
-          }
-        });
-      }
-
-      // Initialize icon on load
+      // Initialize on load
       document.addEventListener("DOMContentLoaded", () => {
-        const currentTheme =
-          document.documentElement.getAttribute("data-theme") || "light";
-        updateThemeIcon(currentTheme);
-        requestNotificationPermission();
+        if (typeof requestNotificationPermission === "function") {
+          requestNotificationPermission();
+        }
       });
 
       // PWA Install Logic
-      let deferredPrompt;
+      window.deferredPrompt = null;
       const installPrompt = document.getElementById("installPrompt");
 
       window.addEventListener("beforeinstallprompt", (e) => {
         // Prevent Chrome 67 and earlier from automatically showing the prompt
         e.preventDefault();
         // Stash the event so it can be triggered later.
-        deferredPrompt = e;
+        window.deferredPrompt = e;
 
         // Show the prompt logic:
         // Check if user has dismissed it recently (optional, skipping for now to ensure visibility)
@@ -649,24 +621,24 @@
       }
 
       async function installPWA() {
-        if (!deferredPrompt) {
+        if (!window.deferredPrompt) {
           return;
         }
         // Show the install prompt
-        deferredPrompt.prompt();
+        window.deferredPrompt.prompt();
         // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
+        const { outcome } = await window.deferredPrompt.userChoice;
         console.log(`User response to the install prompt: ${outcome}`);
 
         // We've used the prompt, and can't use it again, throw it away
-        deferredPrompt = null;
+        window.deferredPrompt = null;
         closeInstallPrompt();
       }
 
       window.addEventListener("appinstalled", () => {
         // Hide the app-provided install promotion
         closeInstallPrompt();
-        deferredPrompt = null;
+        window.deferredPrompt = null;
         console.log("PWA was installed");
       });
     </script>

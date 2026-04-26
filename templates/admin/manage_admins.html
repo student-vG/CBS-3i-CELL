@@ -6,10 +6,10 @@ block content %}
     <p>Manage admin roles and permissions</p>
   </div>
   <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap">
-    <a href="{{ url_for('admin_dashboard') }}" class="btn-dashboard"
+    <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"
       >Back to Dashboard</a
     >
-    <a href="{{ url_for('manage_users') }}" class="btn-dashboard"
+    <a href="{{ url_for('manage_users') }}" class="btn-secondary"
       >Manage Users</a
     >
   </div>
@@ -46,14 +46,16 @@ block content %}
                 method="POST"
                 action="{{ url_for('approve_admin', admin_id=admin._id) }}"
               >
-                <button type="submit" class="btn-approve">Approve</button>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-add">Approve</button>
               </form>
               <form
                 method="POST"
                 action="{{ url_for('reject_admin', admin_id=admin._id) }}"
                 onsubmit="return confirm('Are you sure?');"
               >
-                <button type="submit" class="btn-reject">Reject</button>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-delete">Reject</button>
               </form>
             </div>
           </td>
@@ -95,6 +97,7 @@ block content %}
               action="{{ url_for('change_admin_level', admin_id=admin._id) }}"
               style="display: flex; gap: 0.5rem; align-items: center"
             >
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <select class="select-level" name="level">
                 <option value="super_admin" {% if admin.admin_level == "super_admin" %}selected{% endif %}>
                   Super Admin
@@ -103,7 +106,7 @@ block content %}
                   Faculty
                 </option>
               </select>
-              <button type="submit" class="btn-update">Update</button>
+              <button type="submit" class="btn btn-edit">Update</button>
             </form>
           </td>
         </tr>
@@ -113,41 +116,6 @@ block content %}
   </div>
 </div>
 <style>
-  .btn-approve {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-reject {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-update {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-dashboard {
-    background: linear-gradient(135deg, #64748b, #475569);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 500;
-  }
   .badge-super {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;

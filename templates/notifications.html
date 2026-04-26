@@ -7,6 +7,7 @@
         <h2><i class="ph-bold ph-bell" style="color: var(--primary); margin-right: 0.5rem;"></i> Notifications</h2>
         
         <form action="{{ url_for('mark_all_read') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <button type="submit" class="btn-secondary">
                 <i class="ph-bold ph-checks"></i> Mark All Read
             </button>
@@ -38,6 +39,7 @@
                     
                     {% if not note.is_read %}
                     <form action="{{ url_for('mark_notification_read', note_id=note._id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="btn-icon" title="Mark as read" style="color: var(--text-muted);">
                             <i class="ph ph-check"></i>
                         </button>

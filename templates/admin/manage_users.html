@@ -63,15 +63,16 @@ block content %}
                 action="{{ url_for('approve_student', user_id=user._id) }}"
                 style="display: inline"
               >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button
                   type="submit"
-                  class="btn-primary"
+                  class="btn-add"
                   style="padding: 0.5rem 1rem; margin-right: 0.5rem"
                 >
                   ✓ Approve
                 </button>
               </form>
-              <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-secondary" style="padding: 0.5rem; margin-right: 0.5rem;" title="View Details">
+              <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-view" style="padding: 0.5rem; margin-right: 0.5rem;" title="View Details">
                   <i class="ph-bold ph-eye"></i>
               </a>
               <form
@@ -80,9 +81,10 @@ block content %}
                 style="display: inline"
                 onsubmit="return confirm('Are you sure?');"
               >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button
                   type="submit"
-                  class="btn-danger"
+                  class="btn-delete"
                   style="padding: 0.5rem 1rem"
                 >
                   ✗ Reject
@@ -154,7 +156,7 @@ block content %}
               >
             </td>
             <td style="padding: 0.75rem; text-align: center;">
-                 <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-secondary" title="View Details">
+                 <a href="{{ url_for('view_student_details', user_id=user._id) }}" class="btn-sm btn-view" title="View Details">
                   <i class="ph-bold ph-eye"></i> View
               </a>
             </td>

@@ -137,6 +137,7 @@ endblock %} {% block content %}
             action="{{ url_for('respond_application', app_id=app._id) }}"
             method="POST"
           >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="hidden" name="response" value="Attending" />
             <button
               type="submit"
@@ -153,6 +154,7 @@ endblock %} {% block content %}
             action="{{ url_for('respond_application', app_id=app._id) }}"
             method="POST"
           >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="hidden" name="response" value="Not Attending" />
             <button
               type="submit"

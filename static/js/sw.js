@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cbs-3icell-v2';
+const CACHE_NAME = 'cbs-3icell-v3';
 const STATIC_ASSETS = [
     '/',
     '/static/css/style.css',
@@ -9,7 +9,10 @@ const STATIC_ASSETS = [
     '/static/images/logo1.png',
     '/static/manifest.json',
     '/offline',
-    'https://unpkg.com/@phosphor-icons/web',
+    'https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css',
+    'https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css',
+    'https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css',
+    'https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/duotone/style.css',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
 ];
 
@@ -36,7 +39,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     // Skip cross-origin requests like Mixpanel/Analytics if any
-    if (!event.request.url.startsWith(self.location.origin) && !event.request.url.includes('unpkg') && !event.request.url.includes('fonts')) {
+    if (
+        !event.request.url.startsWith(self.location.origin) &&
+        !event.request.url.includes('unpkg') &&
+        !event.request.url.includes('jsdelivr') &&
+        !event.request.url.includes('fonts')
+    ) {
         return; 
     }
 

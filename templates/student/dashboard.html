@@ -19,10 +19,6 @@
         {{ act.updated_at.strftime('%d %b %Y') if activities and activities[0]
         and activities[0].updated_at else 'Today' }}
       </div>
-      <div class="notification-bell">
-        <i class="ph-bold ph-bell"></i>
-        <span class="notification-dot"></span>
-      </div>
     </div>
   </header>
 
@@ -290,6 +286,7 @@
                 action="{{ url_for('respond_application', app_id=act._id) }}"
                 method="POST"
               >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="response" value="Attending" />
                 <button class="btn-accept">
                   <i class="ph-bold ph-check"></i> Accept
@@ -299,6 +296,7 @@
                 action="{{ url_for('respond_application', app_id=act._id) }}"
                 method="POST"
               >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="response" value="Not Attending" />
                 <button class="btn-decline">
                   <i class="ph-bold ph-x"></i> Decline
@@ -352,32 +350,30 @@
         </div>
       </section>
 
-      <!-- Upcoming Events -->
       <section class="card-section events-section">
         <div class="section-header">
-          <h2><i class="ph-duotone ph-calendar-check"></i> Upcoming</h2>
+          <h2><i class="ph-duotone ph-calendar-check"></i> Upcoming Drives</h2>
         </div>
         <div class="events-list">
-          <div class="event-item">
-            <div class="event-date">
-              <span class="day">15</span>
-              <span class="month">Feb</span>
+          {% if upcoming_drives %}
+            {% for drive in upcoming_drives %}
+            <div class="event-item">
+              <div class="event-date">
+                <span class="day">{{ drive.drive_date.strftime('%d') if drive.drive_date else '?' }}</span>
+                <span class="month">{{ drive.drive_date.strftime('%b') if drive.drive_date else '?' }}</span>
+              </div>
+              <div class="event-details">
+                <h4>{{ drive.company_name }}</h4>
+                <p><i class="ph-bold ph-briefcase"></i> {{ drive.role }}</p>
+                <p><i class="ph-bold ph-clock"></i> {{ drive.drive_date.strftime('%I:%M %p') if drive.drive_date else 'TBD' }}</p>
+              </div>
             </div>
-            <div class="event-details">
-              <h4>Company PPT - Google</h4>
-              <p><i class="ph-bold ph-clock"></i> 10:00 AM</p>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state-mini">
+              <p>No upcoming drives scheduled</p>
             </div>
-          </div>
-          <div class="event-item">
-            <div class="event-date">
-              <span class="day">18</span>
-              <span class="month">Feb</span>
-            </div>
-            <div class="event-details">
-              <h4>Technical Round - Amazon</h4>
-              <p><i class="ph-bold ph-clock"></i> 2:00 PM</p>
-            </div>
-          </div>
+          {% endif %}
         </div>
       </section>
     </div>
@@ -1290,6 +1286,38 @@
 
     .dashboard-right {
       grid-template-columns: 1fr;
+    }
+    
+    .application-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .job-card-new .job-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .job-details {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .action-card-new .action-company {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .action-card-new .response-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .action-card-new .response-buttons button {
+      width: 100%;
     }
   }
 </style>

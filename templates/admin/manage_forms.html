@@ -47,6 +47,7 @@
                 </a>
 
                 <form action="{{ url_for('dynamic_forms.toggle_form', form_id=form._id) }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn-sm btn-secondary" title="{{ 'Deactivate' if form.is_active else 'Activate' }}">
                         {% if form.is_active %}
                         <i class="ph-bold ph-stop"></i>
@@ -84,6 +85,13 @@ function confirmDeleteForm(formId, formTitle) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/admin/forms/delete/${formId}`;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = "{{ csrf_token() }}";
+        form.appendChild(csrfInput);
+
         document.body.appendChild(form);
         form.submit();
     }

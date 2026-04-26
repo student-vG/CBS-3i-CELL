@@ -155,7 +155,7 @@
       <!-- Actions -->
       <div class="anno-btns d-flex gap-2 mt-3 pt-3 border-top">
         <button
-          class="btn-sm btn-secondary flex-grow-1"
+          class="btn-sm btn-edit flex-grow-1"
           data-index="{{ loop.index0 }}"
           onclick="openModal(this.dataset.index)"
         >
@@ -167,7 +167,8 @@
           method="POST"
           style="flex-grow: 1"
         >
-          <button type="submit" class="btn-sm btn-primary w-100">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <button type="submit" class="btn-sm btn-add w-100">
             Publish
           </button>
         </form>
@@ -177,10 +178,10 @@
           method="POST"
           onsubmit="return confirm('Delete?');"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button
             type="submit"
-            class="btn-sm btn-secondary"
-            style="color: var(--accent)"
+            class="btn-sm btn-delete"
           >
             <i class="ph-bold ph-trash"></i>
           </button>
@@ -221,6 +222,7 @@
       enctype="multipart/form-data"
       style="text-align: left"
     >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <style>
         /* Local Form Override */
         .form-group label {

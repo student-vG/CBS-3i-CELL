@@ -151,7 +151,7 @@ School{% endblock %} {% block content %}
       <!-- Action Buttons -->
       <div class="d-flex gap-2 flex-wrap mt-auto pt-3 border-top">
         <button
-          class="btn-sm btn-secondary flex-grow-1"
+          class="btn-sm btn-edit flex-grow-1"
           onclick="openJobModal({{ loop.index0 }})"
         >
           <i class="ph-bold ph-pencil"></i> Edit
@@ -159,7 +159,7 @@ School{% endblock %} {% block content %}
 
         <a
           href="{{ url_for('export_eligible_students', job_id=job._id) }}"
-          class="btn-sm btn-secondary flex-grow-1"
+          class="btn-sm btn-view flex-grow-1"
           title="Export Eligible Students"
         >
           <i class="ph-bold ph-download-simple"></i> Export
@@ -167,7 +167,7 @@ School{% endblock %} {% block content %}
 
         {% if job.status != 'published' %}
         <button
-          class="btn-sm btn-primary flex-grow-1"
+          class="btn-sm btn-add flex-grow-1"
           onclick="publishJobAction('{{ job._id }}')"
         >
           Publish
@@ -180,10 +180,10 @@ School{% endblock %} {% block content %}
           onsubmit="return confirm('Delete this job?');"
           style="margin: 0"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button
             type="submit"
-            class="btn-sm btn-secondary"
-            style="color: var(--accent); border-color: var(--border)"
+            class="btn-sm btn-delete"
           >
             <i class="ph-bold ph-trash"></i>
           </button>
@@ -232,6 +232,7 @@ School{% endblock %} {% block content %}
       onsubmit="handleJobFormSubmit(event)"
       style="text-align: left"
     >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <style>
         /* Local Form Override */
         .form-group label {
@@ -559,6 +560,13 @@ School{% endblock %} {% block content %}
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = `/admin/jobs/${id}/publish`;
+      
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrf_token';
+      csrfInput.value = "{{ csrf_token() }}";
+      form.appendChild(csrfInput);
+
       document.body.appendChild(form);
       form.submit();
   }

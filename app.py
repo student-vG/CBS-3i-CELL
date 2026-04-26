@@ -30,6 +30,42 @@ UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# --- SECURITY CONFIGURATION ---
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
+
+# 1. Rate Limiting
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+# 2. Secure Headers (Talisman)
+talisman = Talisman(
+    app,
+    content_security_policy={
+        'default-src': ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://unpkg.com"],
+        'img-src': ["'self'", "data:", "https:", "blob:"],
+        'script-src': ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+        'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"]
+    },
+    force_https=False  # Set to True in production with proper SSL
+)
+
+# 3. CSRF Protection
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+
+# 4. Session Security
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=False # Set to True in production (HTTPS)
+)
+
 # Initialize DB
 db = get_db()
 users_collection = db['users']
@@ -89,13 +125,45 @@ def home():
         if session.get('role') == 'admin':
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('student_dashboard'))
-    return render_template('login.html')
+        
+    # Fetch real data for landing page
+    active_jobs_count = jobs_collection.count_documents({'status': 'published'})
+    total_students = students_collection.count_documents({})
+    companies_count = len(jobs_collection.distinct('company_name'))
+    
+    # Calculate a mock 'highest package' from jobs if available, otherwise default
+    jobs_with_package = list(jobs_collection.find({'package': {'$exists': True, '$ne': ''}}))
+    highest_package = "12 LPA" # default
+    if jobs_with_package:
+        # Try to extract numbers and find max
+        import re
+        max_val = 0
+        for j in jobs_with_package:
+            nums = re.findall(r'\d+(?:\.\d+)?', j.get('package', ''))
+            if nums:
+                try:
+                    val = float(nums[0])
+                    if val > max_val: max_val = val
+                except:
+                    pass
+        if max_val > 0:
+            highest_package = f"{max_val:g} LPA"
+
+    recent_jobs = list(jobs_collection.find({'status': 'published'}).sort('created_at', -1).limit(3))
+    
+    return render_template('landing.html', 
+                           active_jobs_count=active_jobs_count,
+                           total_students=total_students,
+                           companies_count=companies_count,
+                           highest_package=highest_package,
+                           recent_jobs=recent_jobs)
 
 @app.route('/login')
 def login():
     return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login_post():
     email = request.form.get('email')
     password = request.form.get('password')
@@ -174,20 +242,35 @@ def login_post():
 @app.route('/student/complete-profile', methods=['GET', 'POST'])
 @login_required(role='student')
 def complete_profile():
-    # Check if already completed
     user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
-    if user.get('profile_completed'):
-        return redirect(url_for('student_dashboard'))
+    student = students_collection.find_one({'user_id': ObjectId(session['user_id'])})
 
     if request.method == 'POST':
         try:
+            # Helper for safe int/float conversion
+            def safe_int(val, default=0):
+                try:
+                    return int(val) if val and str(val).strip() else default
+                except (ValueError, TypeError):
+                    return default
+
+            def safe_float(val, default=0.0):
+                try:
+                    return float(val) if val and str(val).strip() else default
+                except (ValueError, TypeError):
+                    return default
+
             # 1. Personal Details
             name = request.form.get('name')
+            personal_email = request.form.get('personal_email')
+            phone = request.form.get('phone')
+
+            if not name or not personal_email or not phone:
+                flash("Required personal details are missing.", "error")
+                return redirect(url_for('complete_profile'))
             gender = request.form.get('gender')
             dob = request.form.get('dob')
-            phone = request.form.get('phone')
             alt_phone = request.form.get('alt_phone')
-            personal_email = request.form.get('personal_email')
             nationality = request.form.get('nationality')
             marital_status = request.form.get('marital_status')
             aadhaar = request.form.get('aadhaar')
@@ -196,19 +279,19 @@ def complete_profile():
             permanent_address = request.form.get('permanent_address')
             current_address = request.form.get('current_address')
 
-            # 2. Academic Details - Nested Structure
+            # 2. Academic Details - Nested Structure (with safe conversions)
             academic = {
                 'tenth': {
                     'school': request.form.get('tenth_school'),
                     'board': request.form.get('tenth_board'),
-                    'year': int(request.form.get('tenth_year') or 0),
-                    'score': float(request.form.get('tenth_score') or 0),
+                    'year': safe_int(request.form.get('tenth_year')),
+                    'score': safe_float(request.form.get('tenth_score')),
                 },
                 'twelfth': {
                     'school': request.form.get('twelfth_school'),
                     'board': request.form.get('twelfth_board'),
-                    'year': int(request.form.get('twelfth_year') or 0),
-                    'score': float(request.form.get('twelfth_score') or 0),
+                    'year': safe_int(request.form.get('twelfth_year')),
+                    'score': safe_float(request.form.get('twelfth_score')),
                     'stream': request.form.get('twelfth_stream')
                 },
                 'ug': {
@@ -216,9 +299,9 @@ def complete_profile():
                     'university': request.form.get('ug_university'),
                     'degree': request.form.get('ug_degree'),
                     'branch': request.form.get('ug_branch'),
-                    'year': int(request.form.get('ug_year') or 0),
-                    'score': float(request.form.get('ug_score') or 0),
-                    'backlogs': int(request.form.get('ug_backlogs') or 0),
+                    'year': safe_int(request.form.get('ug_year')),
+                    'score': safe_float(request.form.get('ug_score')),
+                    'backlogs': safe_int(request.form.get('ug_backlogs')),
                     'backlog_status': request.form.get('ug_backlog_status')
                 },
                 'pg': {
@@ -226,19 +309,19 @@ def complete_profile():
                     'university': request.form.get('pg_university'),
                     'degree': request.form.get('pg_degree'),
                     'branch': request.form.get('pg_branch'),
-                    'year': int(request.form.get('pg_year') or 0) if request.form.get('pg_year') else None,
-                    'score': float(request.form.get('pg_score') or 0) if request.form.get('pg_score') else None,
-                    'backlogs': int(request.form.get('pg_backlogs') or 0),
+                    'year': safe_int(request.form.get('pg_year')) if request.form.get('pg_year') else None,
+                    'score': safe_float(request.form.get('pg_score')) if request.form.get('pg_score') else None,
+                    'backlogs': safe_int(request.form.get('pg_backlogs')),
                     'backlog_status': request.form.get('pg_backlog_status')
                 }
             }
             
             # Simple flattening for primary sorting/filtering
             main_branch = request.form.get('pg_branch') if request.form.get('pg_degree') else request.form.get('ug_branch')
-            main_cgpa = float(request.form.get('pg_score') or request.form.get('ug_score') or 0)
+            main_cgpa = safe_float(request.form.get('pg_score') or request.form.get('ug_score'))
 
-            skills = request.form.get('skills')
-            projects = request.form.get('projects')
+            skills = request.form.get('skills', '')
+            projects = request.form.get('projects', '')
             
             # File Upload (GridFS)
             resume_file = request.files.get('resume')
@@ -256,32 +339,38 @@ def complete_profile():
                     metadata={'user_id': ObjectId(session['user_id']), 'type': 'resume'}
                 )
 
+            # Build update dict
+            update_data = {
+                'name': name,
+                'gender': gender,
+                'dob': dob,
+                'phone': phone,
+                'alt_phone': alt_phone,
+                'personal_email': personal_email,
+                'nationality': nationality,
+                'marital_status': marital_status,
+                'aadhaar': aadhaar,
+                'pan': pan,
+                'address': {
+                    'permanent': permanent_address,
+                    'current': current_address
+                },
+                'academic': academic,
+                'branch': main_branch,
+                'cgpa': main_cgpa,
+                'skills': [s.strip() for s in skills.split(',') if s.strip()],
+                'projects': projects,
+                'profile_updated_at': datetime.datetime.now()
+            }
+            
+            # Only update resume if a new one was uploaded
+            if resume_id:
+                update_data['resume_file_id'] = resume_id
+
             # Update Student Profile
             students_collection.update_one(
                 {'user_id': ObjectId(session['user_id'])},
-                {'$set': {
-                    'name': name, # Update name from form
-                    'gender': gender,
-                    'dob': dob,
-                    'phone': phone,
-                    'alt_phone': alt_phone,
-                    'personal_email': personal_email,
-                    'nationality': nationality,
-                    'marital_status': marital_status,
-                    'aadhaar': aadhaar,
-                    'pan': pan,
-                    'address': {
-                        'permanent': permanent_address,
-                        'current': current_address
-                    },
-                    'academic': academic,
-                    'branch': main_branch, # For quick filter
-                    'cgpa': main_cgpa,   # For quick filter
-                    'skills': [s.strip() for s in skills.split(',')],
-                    'projects': projects,
-                    'resume_file_id': resume_id,
-                    'profile_updated_at': datetime.datetime.now()
-                }}
+                {'$set': update_data}
             )
             
             # Update User Status & Name
@@ -298,16 +387,19 @@ def complete_profile():
             return redirect(url_for('login')) # Redirect to login/wait page logic
             
         except Exception as e:
+            import traceback
+            traceback.print_exc() # Print full stack trace to server logs
             flash(f"Error saving profile: {str(e)}", "error")
             return redirect(url_for('complete_profile'))
 
-    return render_template('student/complete_profile.html')
+    return render_template('student/complete_profile.html', student=student)
 
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
 
 @app.route('/signup', methods=['POST'])
+@limiter.limit("3 per hour")
 def signup_post():
     try:
         role = request.form.get('role')
@@ -614,9 +706,24 @@ def view_student_resume(user_id):
         flash(f"Error accessing resume: {str(e)}", "error")
         return redirect(url_for('view_student_details', user_id=user_id))
 
+# --- Helper: Auto-expire jobs past their deadline ---
+def auto_expire_jobs():
+    """Automatically mark published jobs as expired if past their expires_at date."""
+    now = datetime.datetime.now()
+    result = jobs_collection.update_many(
+        {
+            'status': {'$ne': 'expired'},
+            'expires_at': {'$lt': now, '$ne': None}
+        },
+        {'$set': {'status': 'expired'}}
+    )
+    return result.modified_count
+
 @app.route('/admin/dashboard')
 @login_required(role='admin')
 def admin_dashboard():
+    # Auto-expire jobs on dashboard load
+    auto_expire_jobs()
     # Check if user is super admin or faculty
     admin_level = session.get('admin_level')
     
@@ -1073,6 +1180,8 @@ def send_notification_to_student(student_id):
 @app.route('/admin/jobs/manage')
 @login_required(role='admin')
 def manage_jobs():
+    # Auto-expire jobs before listing
+    auto_expire_jobs()
     jobs = list(jobs_collection.find().sort('created_at', -1))
     
     # Prepare jobs for both display (datetimes) and JSON (strings)
@@ -1805,10 +1914,35 @@ def view_applications():
                 'as': 'job_info'
             }
         },
-        {'$unwind': '$student_info'},
-        {'$unwind': '$job_info'}
+        {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}},
+        {'$unwind': {'path': '$job_info', 'preserveNullAndEmptyArrays': True}}
     ]
     applications = list(applications_collection.aggregate(pipeline))
+
+    # Enrichment: Fallback to snapshot data if lookups failed
+    for app in applications:
+        if not app.get('student_info'):
+            app['student_info'] = {
+                'name': app.get('student_name', 'Unknown (Deleted)'),
+                'contact_email': app.get('student_email'),
+                'phone': app.get('student_phone'),
+                'cgpa': app.get('cgpa'),
+                'branch': app.get('branch'),
+                'resume_file_id': app.get('resume_file_id')
+            }
+        if not app.get('job_info'):
+            app['job_info'] = {
+                'company_name': app.get('company_name', 'Unknown Company'),
+                'role': app.get('job_role', 'Unknown Role')
+            }
+        
+        # If user info is missing (deleted user), allow basic details from snapshot
+        if 'user_info' not in app or not app['user_info']:
+             app['user_info'] = {'email': app.get('student_email', 'N/A')}
+        elif isinstance(app['user_info'], list) and len(app['user_info']) > 0:
+             app['user_info'] = app['user_info'][0]
+        elif isinstance(app['user_info'], list):
+             app['user_info'] = {'email': app.get('student_email', 'N/A')}
     
     # Calculate multiple applications per student
     student_app_counts = {}
@@ -1829,9 +1963,9 @@ def view_applications():
 @app.route('/admin/applications/job/<job_id>')
 @login_required(role='admin')
 def view_job_applications(job_id):
-    """Super Admin: View applicants for a specific job"""
-    if session.get('admin_level') != 'super_admin':
-        flash("Only Super Admins can view job-specific applications", "error")
+    """Super Admin/Faculty: View applicants for a specific job"""
+    if session.get('admin_level') not in ['super_admin', 'faculty']:
+        flash("Unauthorized access", "error")
         return redirect(url_for('admin_dashboard'))
     
     job = jobs_collection.find_one({'_id': ObjectId(job_id)})
@@ -1860,12 +1994,29 @@ def view_job_applications(job_id):
                 'as': 'user_info'
             }
         },
-        {'$unwind': '$student_info'},
-        {'$unwind': '$user_info'},
+        {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}},
+        {'$unwind': {'path': '$user_info', 'preserveNullAndEmptyArrays': True}},
         {'$sort': {'applied_at': -1}}
     ]
     
     applications = list(applications_collection.aggregate(pipeline))
+
+    # Enrichment: Fallback to snapshot data if lookups failed
+    for app in applications:
+        if not app.get('student_info'):
+            app['student_info'] = {
+                'name': app.get('student_name', 'Unknown (Deleted)'),
+                'contact_email': app.get('student_email'),
+                'phone': app.get('student_phone'),
+                'cgpa': app.get('cgpa'),
+                'branch': app.get('branch'),
+                'resume_file_id': app.get('resume_file_id')
+            }
+        
+        # Correctly handle user_info if it was unwound or missing
+        # If preserveNull.. is True, it might be None or a dict. 
+        if not app.get('user_info'):
+             app['user_info'] = {'email': app.get('student_email', 'N/A')}
     
     # Calculate multiple applications
     student_app_counts = {}
@@ -1885,9 +2036,10 @@ def view_job_applications(job_id):
 @app.route('/admin/export/applications/job/<job_id>')
 @login_required(role='admin')
 def export_job_applications(job_id):
-    """Super Admin: Export applicants for a specific job"""
-    if session.get('admin_level') != 'super_admin':
-        flash("Only Super Admins can export job applications", "error")
+    """Super Admin/Faculty: Export applicants for a specific job"""
+    # Allow Faculty to export too
+    if session.get('admin_level') not in ['super_admin', 'faculty']:
+        flash("Unauthorized access", "error")
         return redirect(url_for('admin_dashboard'))
     
     job = jobs_collection.find_one({'_id': ObjectId(job_id)})
@@ -2098,13 +2250,22 @@ def student_dashboard():
         sort=[('login_time', -1)]
     )
         
-    # Recent jobs (published ones) - Smart Filter by CGPA could be here, but for now showing all top ones
-    # Filter by eligibility (CGPA)
+    # Auto-expire jobs
+    auto_expire_jobs()
+    
+    # Recent jobs (published ones) - Smart Filter by CGPA
     student_cgpa = student.get('cgpa', 0.0)
     recent_jobs = list(jobs_collection.find({
         'status': 'published',
-        'min_cgpa': {'$lte': student_cgpa} # Only show eligible jobs in "Recommended"
+        'min_cgpa': {'$lte': student_cgpa}
     }).sort('published_at', -1).limit(5))
+    
+    # Upcoming drives (jobs with future drive_date)
+    now = datetime.datetime.now()
+    upcoming_drives = list(jobs_collection.find({
+        'status': 'published',
+        'drive_date': {'$gte': now}
+    }).sort('drive_date', 1).limit(5))
     
     # Announcements
     announcements = list(announcements_collection.find({'status': 'published'}).sort('created_at', -1).limit(5))
@@ -2144,6 +2305,7 @@ def student_dashboard():
                          shortlisted_count=shortlisted_count,
                          selected_count=selected_count,
                          activities=activities,
+                         upcoming_drives=upcoming_drives,
                          user=user,
                          last_login_log=last_login_log)
 
@@ -2322,6 +2484,25 @@ def update_resume():
         
         flash("Resume updated successfully!", "success")
         return redirect(url_for('student_dashboard'))
+
+# --- ALL STUDENTS LIST (for admin quick action) ---
+@app.route('/admin/all-students')
+@login_required(role='admin')
+def all_students_list():
+    """Display all students in a table with View button."""
+    pipeline = [
+        {'$match': {'role': 'student'}},
+        {'$lookup': {
+            'from': 'students',
+            'let': {'user_id': '$_id'},
+            'pipeline': [{'$match': {'$expr': {'$eq': ['$user_id', '$$user_id']}}}],
+            'as': 'student_info'
+        }},
+        {'$unwind': {'path': '$student_info', 'preserveNullAndEmptyArrays': True}},
+        {'$sort': {'created_at': -1}}
+    ]
+    students = list(users_collection.aggregate(pipeline))
+    return render_template('admin/all_students.html', students=students)
 
 if __name__ == '__main__':
     app.run(debug=True)

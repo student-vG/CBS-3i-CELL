@@ -25,6 +25,7 @@ endblock %} {% block content %}
       enctype="multipart/form-data"
       class="auth-form-stack"
     >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <!-- Basics Grid -->
       <div class="input-group-card">
         <!-- Role Selection Card -->

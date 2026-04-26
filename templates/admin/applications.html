@@ -48,22 +48,22 @@
       <tbody>
         {% for app in applications %}
         <tr class="{% if app.is_multiple_applicant %}multiple-applicant{% endif %}" title="{% if app.is_multiple_applicant %}Applied to 2+ active jobs{% endif %}">
-          <td>
+          <td data-label="Student Details">
             {% if app.is_multiple_applicant %}
             <span style="color: #ef4444; font-weight: bold; margin-right: 0.5rem">🚩</span>
             {% endif %}
             <div style="font-weight: 600">{{ app.student_info.name }}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted)">{{ app.user_info.email if app.user_info else 'N/A' }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); word-break: break-all;">{{ app.user_info.email if app.user_info else 'N/A' }}</div>
           </td>
-          <td>
+          <td data-label="Academic Info">
             <div class="badge" style="display: inline-block; margin-bottom: 0.25rem">{{ app.student_info.branch }}</div>
             <div style="font-size: 0.9rem">{{ app.student_info.cgpa }} CGPA</div>
           </td>
-          <td>
+          <td data-label="Job Opportunity">
             <div style="font-weight: 600">{{ app.job_info.company_name }}</div>
             <div style="font-size: 0.8rem; color: var(--text-muted)">{{ app.job_info.role }}</div>
           </td>
-          <td>
+          <td data-label="Resume">
             {% if app.student_info.resume_file_id %}
             <a href="{{ url_for('file_serving.serve_file', file_id=app.student_info.resume_file_id) }}" class="btn-secondary btn-sm" style="padding: 0.3rem 0.6rem">
               <i class="ph ph-file-pdf"></i> View
@@ -72,13 +72,13 @@
             <span class="text-muted">N/A</span>
             {% endif %}
           </td>
-          <td>{{ app.applied_at.strftime('%d %b %Y') }}</td>
-          <td>
+          <td data-label="Applied Date">{{ app.applied_at.strftime('%d %b %Y') }}</td>
+          <td data-label="Status">
             <span class="status-badge {{ app.status.lower() }}">
               {% if app.status == 'GD' %}Group Discussion{% else %}{{ app.status }}{% endif %}
             </span>
           </td>
-          <td>
+          <td data-label="Student Response">
             {% if app.student_response %}
               {% if app.student_response == 'Attending' %}
             <span style="color: #166534; font-weight: 600; font-size: 0.85rem"><i class="ph-bold ph-check"></i> Attending</span>
@@ -89,8 +89,9 @@
             <span style="color: var(--text-muted); font-size: 0.85rem">-</span>
             {% endif %}
           </td>
-          <td>
-            <form action="{{ url_for('update_application_status', app_id=app._id) }}" method="POST" style="display: flex; gap: 0.5rem; align-items: center">
+          <td data-label="Action">
+            <form action="{{ url_for('update_application_status', app_id=app._id) }}" method="POST" style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <select name="status" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; min-width: 120px">
                 <option value="Applied" {% if app.status == "Applied" %}selected{% endif %}>Applied</option>
                 <option value="Shortlisted" {% if app.status == "Shortlisted" %}selected{% endif %}>Shortlisted</option>
@@ -114,5 +115,29 @@
   tr.multiple-applicant { background-color: #fef2f2 !important; border-left: 4px solid #ef4444 !important; }
   tr.multiple-applicant:hover { background-color: #fee2e2 !important; }
   .data-table tbody tr { transition: background-color 0.2s; }
+  
+  @media (max-width: 768px) {
+    .section-card > div:first-child {
+      flex-direction: column;
+      align-items: stretch !important;
+      gap: 1rem;
+    }
+    
+    .section-card > div:first-child > div:last-child {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .section-card > div:first-child > div:last-child a {
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+    
+    /* Ensure content inside tds aligns nicely on mobile */
+    .data-table td > div {
+      text-align: right;
+    }
+  }
 </style>
 {% endblock %}

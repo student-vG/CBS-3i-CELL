@@ -123,6 +123,7 @@
   >
     <h2 style="margin-bottom: 0.75rem">Send Notification</h2>
     <form id="notificationForm" method="POST" style="display: block">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div style="margin-bottom: 1rem">
         <label style="display: block; margin-bottom: 0.5rem">Title</label>
         <input
