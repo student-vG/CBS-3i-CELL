@@ -36,8 +36,8 @@ School{% endblock %} {% block content %}
     <div
       style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap"
     >
-      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">
-        <i class="ph-bold ph-arrow-left"></i> Back
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-back">
+        <i class="ph-bold ph-arrow-left"></i> Back to Dashboard
       </a>
       <button class="btn-primary" onclick="openJobModal()">
         <i class="ph-bold ph-plus"></i> Post New Job
@@ -149,7 +149,7 @@ School{% endblock %} {% block content %}
       </div>
 
       <!-- Action Buttons -->
-      <div class="d-flex gap-2 flex-wrap mt-auto pt-3 border-top">
+      <div class="d-flex gap-3 flex-wrap mt-auto pt-3 border-top">
         <button
           class="btn-sm btn-edit flex-grow-1"
           onclick="openJobModal({{ loop.index0 }})"
@@ -159,7 +159,7 @@ School{% endblock %} {% block content %}
 
         <a
           href="{{ url_for('export_eligible_students', job_id=job._id) }}"
-          class="btn-sm btn-view flex-grow-1"
+          class="btn-sm btn-responses flex-grow-1"
           title="Export Eligible Students"
         >
           <i class="ph-bold ph-download-simple"></i> Export
@@ -167,10 +167,10 @@ School{% endblock %} {% block content %}
 
         {% if job.status != 'published' %}
         <button
-          class="btn-sm btn-add flex-grow-1"
+          class="btn-sm btn-publish flex-grow-1"
           onclick="publishJobAction('{{ job._id }}')"
         >
-          Publish
+          <i class="ph-bold ph-megaphone"></i> Publish
         </button>
         {% endif %}
 
@@ -183,7 +183,8 @@ School{% endblock %} {% block content %}
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button
             type="submit"
-            class="btn-sm btn-delete"
+            class="btn-sm btn-danger"
+            style="min-width: 42px;"
           >
             <i class="ph-bold ph-trash"></i>
           </button>

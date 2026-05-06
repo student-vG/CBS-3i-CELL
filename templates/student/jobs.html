@@ -126,7 +126,7 @@ endblock %} {% block content %}
       </div>
 
       {% if job._id|string in applied_job_ids_str %}
-      <button class="btn-secondary w-100" disabled>
+      <button class="btn-cancel w-100" disabled>
         <i class="ph ph-check-circle"></i> Already Applied
       </button>
       {% elif student.cgpa >= job.min_cgpa %}
@@ -136,11 +136,11 @@ endblock %} {% block content %}
       </form>
       {% else %}
       <button
-        class="btn-secondary w-100"
+        class="btn-danger w-100"
         disabled
-        style="opacity: 0.6; cursor: not-allowed"
+        style="opacity: 0.7; cursor: not-allowed"
       >
-        <i class="ph ph-info"></i> Not Eligible
+        <i class="ph ph-lock"></i> Not Eligible
       </button>
       {% endif %}
     </div>

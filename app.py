@@ -150,13 +150,33 @@ def home():
             highest_package = f"{max_val:g} LPA"
 
     recent_jobs = list(jobs_collection.find({'status': 'published'}).sort('created_at', -1).limit(3))
+    for job in recent_jobs:
+        drive_date = job.get('drive_date')
+        if isinstance(drive_date, datetime.datetime):
+            job['drive_date_display'] = drive_date.strftime('%d %b %Y')
+        elif drive_date:
+            job['drive_date_display'] = str(drive_date)
+        else:
+            job['drive_date_display'] = 'TBA'
+
+    next_drive = jobs_collection.find_one(
+        {
+            'status': 'published',
+            'drive_date': {'$type': 'date', '$gte': datetime.datetime.now()}
+        },
+        sort=[('drive_date', 1)]
+    )
+    if next_drive and isinstance(next_drive.get('drive_date'), datetime.datetime):
+        next_drive['drive_date_display'] = next_drive['drive_date'].strftime('%d %b %Y')
+        next_drive['drive_date_iso'] = next_drive['drive_date'].strftime('%Y-%m-%dT%H:%M:%S')
     
     return render_template('landing.html', 
                            active_jobs_count=active_jobs_count,
                            total_students=total_students,
                            companies_count=companies_count,
                            highest_package=highest_package,
-                           recent_jobs=recent_jobs)
+                           recent_jobs=recent_jobs,
+                           next_drive=next_drive)
 
 @app.route('/login')
 def login():

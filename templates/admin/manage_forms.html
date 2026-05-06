@@ -41,14 +41,14 @@
               {% endif %}
             </td>
             <td>
-              <div class="d-flex gap-2">
-                <a href="{{ url_for('dynamic_forms.view_form_responses', form_id=form._id) }}" class="btn-sm btn-primary" title="View Responses">
+              <div class="d-flex gap-3">
+                <a href="{{ url_for('dynamic_forms.view_form_responses', form_id=form._id) }}" class="btn-sm btn-responses" title="View Responses">
                     <i class="ph-bold ph-list-dashes"></i> Responses
                 </a>
 
                 <form action="{{ url_for('dynamic_forms.toggle_form', form_id=form._id) }}" method="POST" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn-sm btn-secondary" title="{{ 'Deactivate' if form.is_active else 'Activate' }}">
+                    <button type="submit" class="btn-sm btn-deactivate" title="{{ 'Deactivate' if form.is_active else 'Activate' }}">
                         {% if form.is_active %}
                         <i class="ph-bold ph-stop"></i>
                         {% else %}
@@ -57,11 +57,11 @@
                     </button>
                 </form>
                 
-                <a href="{{ url_for('dynamic_forms.edit_form', form_id=form._id) }}" class="btn-sm btn-secondary" title="Edit Form">
+                <a href="{{ url_for('dynamic_forms.edit_form', form_id=form._id) }}" class="btn-sm btn-edit" title="Edit Form">
                     <i class="ph-bold ph-pencil"></i>
                 </a>
 
-                <button onclick="confirmDeleteForm('{{ form._id }}', '{{ form.title }}')" class="btn-sm btn-secondary" style="color: var(--accent); border-color: var(--accent);" title="Delete Form">
+                <button onclick="confirmDeleteForm('{{ form._id }}', '{{ form.title }}')" class="btn-sm btn-danger" title="Delete Form">
                     <i class="ph-bold ph-trash"></i>
                 </button>
               </div>

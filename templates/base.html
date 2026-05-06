@@ -12,6 +12,12 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='images/logo1.png') }}"
+      type="image/x-icon"
+    />
     <meta name="apple-mobile-web-app-title" content="PlacementCell" />
     <link
       rel="manifest"
@@ -43,25 +49,41 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css"
       crossorigin="anonymous"
-      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/regular/style.css';"
+      onerror="
+        this.onerror = null;
+        this.href =
+          'https://unpkg.com/@phosphor-icons/web@2.1.2/src/regular/style.css';
+      "
     />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/bold/style.css"
       crossorigin="anonymous"
-      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css';"
+      onerror="
+        this.onerror = null;
+        this.href =
+          'https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css';
+      "
     />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css"
       crossorigin="anonymous"
-      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/fill/style.css';"
+      onerror="
+        this.onerror = null;
+        this.href =
+          'https://unpkg.com/@phosphor-icons/web@2.1.2/src/fill/style.css';
+      "
     />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/duotone/style.css"
       crossorigin="anonymous"
-      onerror="this.onerror=null;this.href='https://unpkg.com/@phosphor-icons/web@2.1.2/src/duotone/style.css';"
+      onerror="
+        this.onerror = null;
+        this.href =
+          'https://unpkg.com/@phosphor-icons/web@2.1.2/src/duotone/style.css';
+      "
     />
     <script
       src="{{ url_for('static', filename='js/offline-notifications.js') }}"
@@ -88,8 +110,15 @@
           alt="Logo"
           class="logo-img-lg"
         />
-        <span class="logo-text-simple">
-          Placement<span class="highlight">Cell</span>
+        <span
+          class="logo-text-simple"
+          style="
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+          "
+          >CBS
         </span>
       </a>
     </nav>
@@ -228,8 +257,53 @@
         class="container"
         style="margin-top: 0; padding-top: 0; border: none"
       >
-        <p style="color: var(--text-muted); font-size: 0.85rem">
-          &copy; 2026 CBS 3i-cell. All rights reserved.
+        <div
+          class="footer-brand"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+          "
+        >
+          <span
+            class="footer-logo"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-weight: 700;
+              color: var(--text);
+            "
+          >
+            <i
+              class="ph-fill ph-graduation-cap"
+              style="font-size: 1.25rem; color: var(--primary)"
+            ></i>
+            <span>Chetan B School</span>
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.95rem">
+            &copy; 2026 CBS
+            <span
+              style="
+                background: linear-gradient(45deg, #0acffe, #495aff);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+              "
+              >3i-Cell</span
+            >. All rights reserved.
+          </span>
+        </div>
+        <p
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+          "
+        >
+          Built by Vikram Gudihal and Bibiayisha A Mulla
         </p>
       </div>
     </footer>
@@ -248,8 +322,53 @@
         class="container"
         style="margin-top: 0; padding-top: 0; border: none"
       >
-        <p style="color: var(--text-muted); font-size: 0.85rem">
-          &copy; 2026 CHETAN BUSINESS SCHOOL. All rights reserved.
+        <div
+          class="footer-brand"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+          "
+        >
+          <span
+            class="footer-logo"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-weight: 700;
+              color: var(--text);
+            "
+          >
+            <i
+              class="ph-fill ph-graduation-cap"
+              style="font-size: 1.25rem; color: var(--primary)"
+            ></i>
+            <span>Chetan B School</span>
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.95rem">
+            &copy; 2026 CBS
+            <span
+              style="
+                background: linear-gradient(45deg, #0acffe, #495aff);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+              "
+              >3i-Cell</span
+            >. All rights reserved.
+          </span>
+        </div>
+        <p
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+          "
+        >
+          Built by Vikram Gudihal and Bibiayisha A Mulla
         </p>
       </div>
     </footer>
@@ -282,7 +401,9 @@
         <h3>Confirm Logout</h3>
         <p>Are you sure you want to log out of your session?</p>
         <div class="modal-actions">
-          <button onclick="confirmLogout()" class="btn btn-delete">Logout</button>
+          <button onclick="confirmLogout()" class="btn btn-delete">
+            Logout
+          </button>
           <button onclick="closeLogoutModal()" class="btn btn-cancel">
             Cancel
           </button>
@@ -302,7 +423,7 @@
             if (data.new_count !== undefined) {
               const btn = document.querySelector('a[aria-label="Notifications"]');
               let badge = document.querySelector('.notif-badge');
-              
+
               if (data.new_count > 0) {
                 if (!badge && btn) {
                   // Create badge if not exists
@@ -310,7 +431,7 @@
                   badge.className = 'notif-badge';
                   btn.appendChild(badge);
                 }
-                
+
                 if (badge) {
                   badge.textContent = data.new_count < 10 ? data.new_count : '9+';
                   badge.style.display = 'flex';
@@ -419,61 +540,80 @@
     <style id="security-guard-style">
       .security-popup {
         position: fixed;
-        inset: 0;
+        top: 88px;
+        right: 18px;
+        left: auto;
+        bottom: auto;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(252, 253, 255, 0.65);
-        background-image: linear-gradient(
-          -20deg,
-          #fc607544 0%rgba (255, 155, 68, 0.29) 44 100%
-        ) !important;
-        backdrop-filter: blur(5px);
+        align-items: flex-start;
+        justify-content: flex-end;
+        background: transparent;
         z-index: 9999;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.25s;
+        transform: translateX(18px);
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
       }
       .security-popup.show {
         opacity: 1;
         pointer-events: auto;
+        transform: translateX(0);
       }
       .security-card {
-        background: #0b1021;
-        background-image: linear-gradient(
-          -20deg,
-          #fc6076 0%,
-          #ff9a44 100%
-        ) !important;
-        color: #e2e8f0 !important ;
-        padding: 16px 18px;
+      background: linear-gradient(39deg, #ff7c49, #ff0c61);!important;
+        color: #fef2f2 !important;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        padding: 14px 16px;
         border-radius: 14px;
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 14px 34px rgba(215, 52, 52, 0.45);
         min-width: 260px;
-        max-width: 360px;
-        font-family: "Space Grotesk", "DM Sans", "Helvetica Neue", sans-serif;
+        max-width: 320px;
+        font-family: "Outfit", "DM Sans", "Helvetica Neue", sans-serif;
       }
       .security-title {
         margin: 0 0 6px;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.01em;
       }
       .security-msg {
         margin: 0;
-        font-size: 14px;
-        color: #cbd5e1;
+        font-size: 13px;
+        color: #fee2e2;
       }
       .security-btn {
         margin-top: 12px;
         width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #475569;
-        background: #ffffff;
-        color: #000000;
+        padding: 8px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
         border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
+      }
+      .security-btn:hover {
+        background: rgba(255, 255, 255, 0.24);
+      }
+
+      @media (max-width: 640px) {
+        .security-popup {
+          top: auto;
+          right: 10px;
+          left: 10px;
+          bottom: 90px;
+          transform: translateY(18px);
+        }
+        .security-popup.show {
+          transform: translateY(0);
+        }
+        .security-card {
+          max-width: none;
+          min-width: 0;
+          width: 100%;
+        }
       }
     </style>
 
@@ -483,7 +623,7 @@
         popup.className = "security-popup";
         popup.innerHTML = `
     <div class="security-card">
-      <p class="security-title">Action Blocked</p>
+      <p class="security-title"> ⚠️ Action Blocked</p>
       <p class="security-msg" id="security-msg">This action is disabled on this page.</p>
       <button class="security-btn" id="security-btn">OK</button>
     </div>`;

@@ -95,39 +95,35 @@
         <div class="quick-actions-grid-new">
           <a
             href="{{ url_for('student_jobs') }}"
-            class="action-card action-jobs"
+            class="dashboard-action-item action-blue"
           >
-            <div class="action-icon">
-              <i class="ph-duotone ph-briefcase"></i>
-            </div>
+            <i class="ph-duotone ph-briefcase"></i>
             <span>Find Jobs</span>
+            <p>New Opportunities</p>
           </a>
           <a
             href="{{ url_for('student_profile') }}"
-            class="action-card action-profile"
+            class="dashboard-action-item action-purple"
           >
-            <div class="action-icon">
-              <i class="ph-duotone ph-user-circle"></i>
-            </div>
+            <i class="ph-duotone ph-user-circle"></i>
             <span>Profile</span>
+            <p>Update Resume</p>
           </a>
           <a
             href="{{ url_for('student_announcements') }}"
-            class="action-card action-townhall"
+            class="dashboard-action-item action-red"
           >
-            <div class="action-icon">
-              <i class="ph-duotone ph-megaphone"></i>
-            </div>
+            <i class="ph-duotone ph-megaphone"></i>
             <span>Town Hall</span>
+            <p>Latest Updates</p>
           </a>
           <a
             href="{{ url_for('dynamic_forms.list_student_forms') }}"
-            class="action-card action-forms"
+            class="dashboard-action-item action-green"
           >
-            <div class="action-icon">
-              <i class="ph-duotone ph-clipboard-text"></i>
-            </div>
+            <i class="ph-duotone ph-clipboard-text"></i>
             <span>Forms</span>
+            <p>Fill Responses</p>
           </a>
         </div>
       </section>

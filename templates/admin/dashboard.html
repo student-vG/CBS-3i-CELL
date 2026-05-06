@@ -121,7 +121,7 @@ School{% endblock %} {% block head %}
   <div
     style="
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 1fr;
       gap: 1.5rem;
       margin-bottom: 2rem;
     "
@@ -141,209 +141,91 @@ School{% endblock %} {% block head %}
         Quick Actions
       </h3>
 
-      <div
-        style="
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-          gap: 0.75rem;
-        "
-      >
+      <div class="quick-actions-grid">
         <a
           href="{{ url_for('manage_jobs') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-blue"
         >
-          <i
-            class="ph-bold ph-briefcase"
-            style="
-              font-size: 2rem;
-              color: var(--primary);
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Jobs</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Post & Manage
-          </p>
+          <i class="ph-bold ph-briefcase"></i>
+          <span>Jobs</span>
+          <p>Post & Manage</p>
         </a>
 
         <a
           href="{{ url_for('manage_announcements') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-orange"
         >
-          <i
-            class="ph-bold ph-megaphone"
-            style="
-              font-size: 2rem;
-              color: var(--secondary);
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Announcements</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Post Updates
-          </p>
+          <i class="ph-bold ph-megaphone"></i>
+          <span>Announcements</span>
+          <p>Post Updates</p>
         </a>
 
         <a
           href="{{ url_for('view_applications') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-teal"
         >
-          <i
-            class="ph-bold ph-list-numbers"
-            style="
-              font-size: 2rem;
-              color: var(--accent);
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Applications</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Review All
-          </p>
+          <i class="ph-bold ph-list-numbers"></i>
+          <span>Applications</span>
+          <p>Review All</p>
         </a>
 
         {% if admin_level == 'super_admin' %}
         <a
           href="{{ url_for('manage_users') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-purple"
         >
-          <i
-            class="ph-bold ph-users"
-            style="
-              font-size: 2rem;
-              color: #8b5cf6;
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Users</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Manage All
-          </p>
+          <i class="ph-bold ph-users"></i>
+          <span>Manage Users</span>
+          <p>Manage All</p>
         </a>
 
         <a
           href="{{ url_for('view_login_history') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-pink"
         >
-          <i
-            class="ph-bold ph-clock-clockwise"
-            style="
-              font-size: 2rem;
-              color: #ec4899;
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Login History</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Activity Log
-          </p>
+          <i class="ph-bold ph-clock-clockwise"></i>
+          <span>Login History</span>
+          <p>Activity Log</p>
         </a>
         {% endif %}
 
         <a
           href="{{ url_for('students_activity') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease"
+          class="dashboard-action-item action-green"
         >
-          <i
-            class="ph-bold ph-chart-line"
-            style="
-              font-size: 2rem;
-              color: #06b6d4;
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem">Activity</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            Student Stats
-          </p>
+          <i class="ph-bold ph-chart-line"></i>
+          <span>Activity</span>
+          <p>Student Stats</p>
         </a>
         
         <a 
           href="{{ url_for('export_applications') }}" 
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);"
+          class="dashboard-action-item action-teal"
         >
-            <i class="ph-bold ph-download-simple" style="font-size: 2rem; color: #10b981; display: block; margin-bottom: 0.5rem;"></i>
-            <span style="font-weight: 600; font-size: 0.9rem; color: #10b981;">Student Applications</span>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem;">Export CSV</p>
+            <i class="ph-bold ph-download-simple"></i>
+            <span>Student Applications</span>
+            <p>Export CSV</p>
         </a>
 
         <a
           href="{{ url_for('all_students_list') }}"
-          class="glass-card"
-          style="padding: 1rem; text-align: center; transition: all 0.3s ease; border: 1px solid rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.05);"
+          class="dashboard-action-item action-blue"
         >
-          <i
-            class="ph-bold ph-student"
-            style="
-              font-size: 2rem;
-              color: var(--primary);
-              display: block;
-              margin-bottom: 0.5rem;
-            "
-          ></i>
-          <span style="font-weight: 600; font-size: 0.9rem; color: var(--primary);">All Students</span>
-          <p
-            style="
-              font-size: 0.75rem;
-              color: var(--text-muted);
-              margin-top: 0.3rem;
-            "
-          >
-            View Details
-          </p>
+          <i class="ph-bold ph-student"></i>
+          <span>All Students</span>
+          <p>View Details</p>
+        </a>
+
+        <a
+          href="{{ url_for('students_activity') }}"
+          class="dashboard-action-item action-orange"
+        >
+          <i class="ph-bold ph-bell-ringing"></i>
+          <span>Notify Students</span>
+          <p>Send Alerts</p>
         </a>
       </div>
     </div>
-
   </div>
 
   <!-- Visual Insights Section -->

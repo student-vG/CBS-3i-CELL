@@ -24,15 +24,15 @@
         <!-- Dynamic fields will appear here -->
       </div>
       
-      <button type="button" class="btn-secondary w-100 mb-4" onclick="addField()">
-        <i class="ph-bold ph-plus"></i> Add Field
+      <button type="button" class="btn-add-field w-100 mb-5" onclick="addField()">
+        <i class="ph-bold ph-plus-circle"></i> Add Another Field
       </button>
 
       <!-- Hidden input to store JSON structure -->
       <input type="hidden" name="fields_data" id="fieldsData">
       
       <div class="d-flex gap-4" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
-        <a href="{{ url_for('dynamic_forms.manage_forms') }}" class="btn-secondary w-50" style="text-align: center; text-decoration: none;">Back</a>
+        <a href="{{ url_for('dynamic_forms.manage_forms') }}" class="btn-back w-50">← Back to Manage Forms</a>
         <button type="submit" class="btn-primary w-50">Create Form</button>
       </div>
     </form>
@@ -40,26 +40,36 @@
 </div>
 
 <template id="fieldTemplate">
-  <div class="field-item glass-card-heavy p-3 mb-3" style="border-left: 4px solid var(--primary);">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="m-0">Field <span class="field-index"></span></h5>
-      <button type="button" class="btn-sm btn-danger remove-btn" style="background:none; border:none; color: var(--accent);">
+  <div class="field-item">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h5 class="m-0" style="font-weight: 800; color: var(--primary); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center;">
+          <span class="field-index-badge"><span class="field-index"></span></span>
+          Field Details
+        </h5>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; margin-left: 0.5rem;">Define the details for this form input</p>
+      </div>
+      <button type="button" class="remove-btn">
         <i class="ph-bold ph-trash"></i>
       </button>
     </div>
     
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Label</label>
-        <input type="text" class="form-control field-label" required placeholder="Question/Label">
+    <div class="grid-2" style="gap: 2rem;">
+      <div class="form-group mb-0">
+        <label class="form-label" style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: block;">
+          <i class="ph ph-text-t" style="margin-right: 0.25rem;"></i> Field Label
+        </label>
+        <input type="text" class="form-control field-label" required placeholder="e.g., Your Full Name" style="padding: 1rem 1.25rem;">
       </div>
-      <div class="form-group">
-        <label>Type</label>
-        <select class="form-control field-type">
-          <option value="text">Text Input</option>
-          <option value="textarea">Long Text</option>
-          <option value="number">Number</option>
-          <option value="date">Date</option>
+      <div class="form-group mb-0">
+        <label class="form-label" style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: block;">
+          <i class="ph ph-list-bullets" style="margin-right: 0.25rem;"></i> Input Type
+        </label>
+        <select class="form-control field-type" style="padding: 1rem 1.25rem; height: auto;">
+          <option value="text">Short Text</option>
+          <option value="textarea">Long Text (Paragraph)</option>
+          <option value="number">Number Only</option>
+          <option value="date">Date Picker</option>
           <option value="file">File Upload</option>
         </select>
       </div>

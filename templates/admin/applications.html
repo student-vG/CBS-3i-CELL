@@ -14,12 +14,16 @@
       <a href="{{ url_for('export_job_applications', job_id=current_job._id) }}" class="btn-secondary">
         <i class="ph-bold ph-file-csv"></i> Export CSV
       </a>
-      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-back">
+        <i class="ph-bold ph-arrow-left"></i> Back to Dashboard
+      </a>
       {% else %}
       <a href="{{ url_for('export_applications') }}" class="btn-secondary">
         <i class="ph-bold ph-file-csv"></i> Export All CSV
       </a>
-      <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-back">
+        <i class="ph-bold ph-arrow-left"></i> Back to Dashboard
+      </a>
       {% endif %}
     </div>
   </div>
